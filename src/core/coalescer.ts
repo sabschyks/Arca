@@ -4,7 +4,7 @@
  * * Purpose: Deduplicate identical pending requests to prevent
  * Thundering Herd / Cache Stampede problems.
  */
-export class Coalescer{
+export class Coalescer {
   // Armazena as promessas EM VOO (in-flight).
   // Chave -> Promise<Pending>
   private inflight = new Map<string, Promise<unknown>>();

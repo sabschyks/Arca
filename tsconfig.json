@@ -30,7 +30,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
 
-
     /* Paths */
     "baseUrl": ".",
     "paths": {

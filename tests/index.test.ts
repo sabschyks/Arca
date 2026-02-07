@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Arca } from "../src/index";
 
 describe("Arca Core", () => {
@@ -7,8 +7,8 @@ describe("Arca Core", () => {
     expect(arca).toBeDefined();
   });
 
-  it ('should return pong', () => {
+  it("should return pong", () => {
     const arca = new Arca();
-    expect(arca.ping()).toBe('pong')
-  })
+    expect(arca.ping()).toBe("pong");
+  });
 });

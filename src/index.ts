@@ -3,10 +3,10 @@
  */
 export class Arca {
   constructor() {
-    console.log('Arca initialized');
+    console.log("Arca initialized");
   }
 
   public ping(): string {
-    return 'pong'
+    return "pong";
   }
 }

@@ -23,11 +23,18 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "biome check .",
-    "lint:fix": "biome check --apply .",
+    "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "prepare": "husky install"
   },
-  "keywords": ["cache", "concurrency", "promise", "deduplication", "swr", "typescript"],
+  "keywords": [
+    "cache",
+    "concurrency",
+    "promise",
+    "deduplication",
+    "swr",
+    "typescript"
+  ],
   "author": "Sabrinna Guimarães (sabschyks)",
   "license": "MIT",
   "engines": {

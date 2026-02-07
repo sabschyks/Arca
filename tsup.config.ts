@@ -9,5 +9,5 @@ export default defineConfig({
   clean: true,
   minify: false, // Minificar apenas em release
   target: "es2022",
-  tsconfig: "./tsconfig.json"
+  tsconfig: "./tsconfig.json",
 });
