@@ -1,8 +1,8 @@
 /**
- * Request Coalescing Implementation.
- * Also known as "SingleFlight" pattern.
- * * Purpose: Deduplicate identical pending requests to prevent
- * Thundering Herd / Cache Stampede problems.
+ * Implementação de Coalescência de Requisições.
+ * Também conhecido como padrão "SingleFlight".
+ * * Objetivo: Eliminar requisições pendentes idênticas duplicadas para evitar
+ * problemas de "Thundering Herd" / "Cache Stampede".
  */
 export class Coalescer {
   // Armazena as promessas EM VOO (in-flight).
