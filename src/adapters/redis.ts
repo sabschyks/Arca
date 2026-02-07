@@ -1,11 +1,11 @@
-import Redis, { type Redis as RedisClient } from 'ioredis'
-import type { CacheEntry, StorageAdapter } from '../types'
+import Redis, { type Redis as RedisClient } from "ioredis";
+import type { CacheEntry, StorageAdapter } from "../types";
 
 export class RedisAdapter implements StorageAdapter {
   private client: RedisClient;
 
   constructor(connectionStringOrClient: string | RedisClient) {
-    if (typeof connectionStringOrClient === 'string') {
+    if (typeof connectionStringOrClient === "string") {
       this.client = new Redis(connectionStringOrClient);
     } else {
       this.client = connectionStringOrClient;
@@ -22,7 +22,7 @@ export class RedisAdapter implements StorageAdapter {
       return JSON.parse(data) as CacheEntry<T>;
     } catch {
       // Se o JSON estiver corrompido, tratamos como miss
-      return null
+      return null;
     }
   }
 
@@ -34,7 +34,7 @@ export class RedisAdapter implements StorageAdapter {
     };
 
     // 'PX' define o TTL em milissegundos nativamente no Redis
-    await this.client.set(key, JSON.stringify(entry), 'PX', ttl);
+    await this.client.set(key, JSON.stringify(entry), "PX", ttl);
   }
 
   async delete(key: string): Promise<void> {
