@@ -6,6 +6,7 @@ import { Coalescer } from "./core/coalescer";
 import type { ArcaOptions, FetchOptions, StorageAdapter } from "./types";
 
 export * from "./adapters/memory";
+export * from "./adapters/redis";
 export * from "./types";
 
 export class Arca {
