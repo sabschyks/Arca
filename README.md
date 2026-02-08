@@ -51,13 +51,13 @@ Most traditional caching libraries (e.g. simple Redis wrappers):
 
 ```bash
 # Using pnpm (recommended)
-pnpm add arca
+pnpm add @sabschyks/arca
 
 # Using npm
-npm install arca
+npm install @sabschyks/arca
 
 # Using yarn
-yarn add arca
+yarn add @sabschyks/arca
 ````
 
 ---
@@ -65,7 +65,7 @@ yarn add arca
 ## ⚡ Quick Start
 
 ```ts
-import { Arca } from 'arca';
+import { Arca } from '@sabschyks/arca';
 
 // 1. Initialize Arca (defaults to in-memory storage)
 const arca = new Arca({ defaultTtl: 60_000 }); // 1 minute
