@@ -20,3 +20,11 @@ export interface FetchOptions {
   forceRefresh?: boolean;
   ttl?: number; // TTL específico para esta chamada
 }
+
+export type ArcaEvents = {
+  hit: (key: string) => void;
+  miss: (key: string) => void;
+  stale: (key: string) => void;
+  coalesced: (key: string) => void;
+  error: (err: Error) => void;
+};

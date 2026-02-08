@@ -1,6 +1,6 @@
 {
   "name": "@sabschyks/arca",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "High-concurrency cache coalescing and state management library.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,7 +26,8 @@
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm build && changeset publish",
+    "bench": "npx tsx benchmarks/run.ts"
   },
   "keywords": [
     "cache",
@@ -48,6 +49,7 @@
     "@types/ioredis-mock": "^8.2.6",
     "@types/node": "^25.2.1",
     "@vitest/coverage-v8": "^4.0.18",
+    "benny": "^3.7.1",
     "husky": "^9.1.7",
     "ioredis-mock": "^8.13.1",
     "tsup": "^8.5.1",

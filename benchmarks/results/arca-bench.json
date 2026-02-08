@@ -1,0 +1,27 @@
+{
+  "name": "Thudering Herd Scenarios",
+  "date": "2026-02-08T15:30:32.747Z",
+  "version": "1.0.0",
+  "results": [
+    {
+      "name": "Without Arca (Direct DB)",
+      "ops": 97,
+      "margin": 0.22,
+      "percentSlower": 99.74
+    },
+    {
+      "name": "With Arca (Coalescing)",
+      "ops": 37692,
+      "margin": 29.7,
+      "percentSlower": 0
+    }
+  ],
+  "fastest": {
+    "name": "With Arca (Coalescing)",
+    "index": 1
+  },
+  "slowest": {
+    "name": "Without Arca (Direct DB)",
+    "index": 0
+  }
+}
