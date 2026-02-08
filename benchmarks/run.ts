@@ -3,9 +3,9 @@ import { Arca } from "../src/index";
 
 // Simula banco lento (10ms)
 const slowDbQuery = async () => {
-  await new Promise(r => setTimeout(r, 10));
-  return 'data'
-}
+  await new Promise((r) => setTimeout(r, 10));
+  return "data";
+};
 
 const arca = new Arca({ defaultTtl: 1000 });
 
@@ -13,11 +13,11 @@ const arca = new Arca({ defaultTtl: 1000 });
 const CONCURRENCY = 100;
 
 suite(
-  'Thudering Herd Scenarios',
-  
+  "Thudering Herd Scenarios",
+
   // CASO 1: SEM ARCA
   // Cada request bate no banco.
-  add('Without Arca (Direct DB)', async () => {
+  add("Without Arca (Direct DB)", async () => {
     const promises = [];
     for (let i = 0; i < CONCURRENCY; i++) {
       promises.push(slowDbQuery());
@@ -26,15 +26,15 @@ suite(
   }),
 
   // CASO 2: COM ARCA
-  add('With Arca (Coalescing)', async () => {
+  add("With Arca (Coalescing)", async () => {
     const promises = [];
     for (let i = 0; i < CONCURRENCY; i++) {
-      promises.push(arca.get('bench-key', slowDbQuery));
+      promises.push(arca.get("bench-key", slowDbQuery));
     }
     await Promise.all(promises);
   }),
 
   cycle(),
   complete(),
-  save({ file: 'arca-bench', version: '1.0.0', folder: 'benchmarks/results' }),
-)
+  save({ file: "arca-bench", version: "1.0.0", folder: "benchmarks/results" }),
+);
