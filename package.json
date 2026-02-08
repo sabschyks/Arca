@@ -1,5 +1,5 @@
 {
-  "name": "arca",
+  "name": "@sabschyks/arca",
   "version": "0.0.1",
   "description": "High-concurrency cache coalescing and state management library.",
   "main": "./dist/index.js",
