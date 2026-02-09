@@ -1,7 +1,7 @@
 import Redis, { type Redis as RedisClient } from "ioredis";
-import type { CacheEntry, StorageAdapter } from "../types";
+import type { CacheEntry, LockAdapter, StorageAdapter } from "../types";
 
-export class RedisAdapter implements StorageAdapter {
+export class RedisAdapter implements StorageAdapter, LockAdapter {
   private client: RedisClient;
 
   constructor(connectionStringOrClient: string | RedisClient) {
@@ -50,5 +50,21 @@ export class RedisAdapter implements StorageAdapter {
    */
   async disconnect(): Promise<void> {
     await this.client.quit();
+  }
+
+  async acquire(key: string, ttl: number): Promise<boolean> {
+    // Prefixo para não colidir com dados reais
+    const lockKey = `lock:${key}`;
+
+    // NX: Só define se não existir
+    // PX: Expira em ms
+    const result = await this.client.set(lockKey, "LOCKED", "PX", ttl, "NX");
+
+    return result === "OK";
+  }
+
+  async release(key: string): Promise<void> {
+    const lockKey = `lock:${key}`;
+    await this.client.del(lockKey);
   }
 }

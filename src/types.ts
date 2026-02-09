@@ -4,6 +4,19 @@ export interface CacheEntry<T> {
   ttl: number; // Time to live em ms
 }
 
+export interface LockAdapter {
+  /**
+   * Tenta adquirir o lock.
+   * @returns true se conseguiu, false se já estava ocupado.
+   */
+  acquire(key: string, ttl: number): Promise<boolean>;
+
+  /**
+   * Libera o lock.
+   */
+  release(key: string): Promise<void>;
+}
+
 export interface StorageAdapter {
   get<T>(key: string): Promise<CacheEntry<T> | null>;
   set<T>(key: string, value: T, ttl: number): Promise<void>;
@@ -13,6 +26,7 @@ export interface StorageAdapter {
 
 export interface ArcaOptions {
   storage?: StorageAdapter;
+  lock?: LockAdapter;
   defaultTtl?: number;
 }
 

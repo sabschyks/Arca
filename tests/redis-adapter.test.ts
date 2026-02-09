@@ -59,5 +59,24 @@ describe('RedisAdapter', () => {
     const result = await adapter.get('corrupted');
 
     expect(result).toBeNull();
-  })
+  });
+
+  it('should implement distributed lock semantics correctly', async () => {
+    const key = 'resource-lock';
+
+    // 1. Tenta adquirir lock (Deve conseguir)
+    const acquired = await adapter.acquire(key, 1000);
+    expect(acquired).toBe(true);
+
+    // 2. Tenta adquirir o MESMO lock imediatamante (Deve falhar - simula outro processo)
+    const doubleDip = await adapter.acquire(key, 1000);
+    expect(doubleDip).toBe(false);
+
+    // 3. Libera o lock
+    await adapter.release(key);
+
+    // 4. Tenta adquirir novamente (Deve conseguir agora)
+    const reacquired = await adapter.acquire(key, 1000);
+    expect(reacquired).toBe(true);
+  });
 });

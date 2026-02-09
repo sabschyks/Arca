@@ -1,31 +1,31 @@
-/**
- * Arca - High Concurrency Cache
- */
 import { EventEmitter } from "node:events";
 import { MemoryAdapter } from "./adapters/memory";
 import { Coalescer } from "./core/coalescer";
-import type { ArcaOptions, FetchOptions, StorageAdapter } from "./types";
+import type { ArcaEvents, ArcaOptions, FetchOptions, LockAdapter, StorageAdapter } from "./types";
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
 export * from "./types";
 
+export declare interface IArca {
+  on<U extends keyof ArcaEvents>(event: U, listener: ArcaEvents[U]): this;
+  emit<U extends keyof ArcaEvents>(event: U, ...args: Parameters<ArcaEvents[U]>): boolean;
+}
+
 export class Arca extends EventEmitter {
   private storage: StorageAdapter;
   private coalescer: Coalescer;
   private defaultTtl: number;
+  private options: ArcaOptions; // Guardamos options para acessar o lock
 
   constructor(options: ArcaOptions = {}) {
     super();
+    this.options = options;
     this.storage = options.storage || new MemoryAdapter();
-    this.defaultTtl = options.defaultTtl || 60000; // 1 minuto padrão
+    this.defaultTtl = options.defaultTtl || 60000;
     this.coalescer = new Coalescer();
   }
 
-  /**
-   * Busca um dado.
-   * Estratégia: State-While-Revalidate
-   */
   public async get<T>(
     key: string,
     fetcher: () => Promise<T>,
@@ -33,7 +33,6 @@ export class Arca extends EventEmitter {
   ): Promise<T> {
     const ttl = options.ttl || this.defaultTtl;
 
-    // 1. Tentar pegar do cache (se não forçado a ignorar)
     if (!options.forceRefresh) {
       try {
         const cached = await this.storage.get<T>(key);
@@ -46,9 +45,7 @@ export class Arca extends EventEmitter {
             return cached.value;
           }
 
-          // STALE: O dado existe mas venceu.
-          // Retornamos o dado velho IMEDIATAMENTE e atualizamos em background.
-          // Usamos o coalescer para garantir que apenas UM background update ocorra.
+          // STALE
           this.emit("stale", key);
           this.backgroundUpdate(key, fetcher, ttl).catch((err) => {
             this.emit("error", err);
@@ -57,58 +54,96 @@ export class Arca extends EventEmitter {
           return cached.value;
         }
       } catch (err) {
-        // Se falar o storage (ex: Redis cai), locamos e prosseguimos para o fetcher
         this.emit("error", err instanceof Error ? err : new Error(String(err)));
       }
     }
 
-    // MISS: Não tem no cache ou forceRefresh=true
-    // Precisamos buscar (e esperar) o dado novo.
+    // MISS
     this.emit("miss", key);
     return this.resolveFetch(key, fetcher, ttl);
   }
 
   /**
-   * Executa a busca através do Coalesces e salva no Storage.
+   * Lógica Central: Coalescing + Distributed Locking
    */
   private async resolveFetch<T>(key: string, fetcher: () => Promise<T>, ttl: number): Promise<T> {
-    // Verifica se já existe uma promessa em voo antes de executar
-
     return this.coalescer.execute(key, async () => {
-      // Se o contador não mudou, significa que fomos "coalesced" (aproveitamos a carona)
-      // Se mudou, nós somos a request original.
-      // *Nota: Lógica simplificada. Para precisão exata de "coalesced"
-      // precisaríamos modificar o Coalescer para retornar um status.
-      // Por hora, vamos emitir 'coalesced' apenas se NÃO formos quem executa o fetch real?
-      // Não, melhor: O Coalescer esconde isso.
-      // Vamos emitir 'miss' apenas se realmente buscamos no banco.
+      // 1. Verificar suporte a Lock
+      // Prioridade: Lock explícito > Storage (se suportar Lock)
+      const lockAdapter =
+        this.options.lock || (this.isLockAdapter(this.storage) ? this.storage : null);
 
-      const value = await fetcher();
-      try {
-        await this.storage.set(key, value, ttl);
-      } catch (err) {
-        this.emit("error", err instanceof Error ? err : new Error(String(err)));
+      if (lockAdapter) {
+        // Tenta lockar por 5s (tempo seguro para o fetcher rodar)
+        const acquired = await lockAdapter.acquire(key, 5000);
+
+        if (!acquired) {
+          // ALGUÉM JÁ PEGOU O LOCK EM OUTRO SERVIDOR.
+          // Não rodamos o fetcher. Esperamos o outro servidor atualizar o cache.
+          try {
+            return await this.waitForRemoteUpdate<T>(key);
+          } catch (_err) {
+            // Se timeout, fallback para rodar o fetcher nós mesmos
+            // (Melhor duplicar trabalho do que falhar a request)
+            this.emit(
+              "error",
+              new Error(`Lock wait timeout for ${key}, falling back to local fetch`),
+            );
+          }
+        }
       }
-      return value;
+
+      // 2. Executa Fetch (Se pegou lock ou não tem lock)
+      try {
+        const value = await fetcher();
+        await this.storage.set(key, value, ttl);
+        return value;
+      } catch (err) {
+        throw err;
+      } finally {
+        // Sempre liberar o lock
+        if (lockAdapter) {
+          await lockAdapter.release(key);
+        }
+      }
     });
   }
 
-  /**
-   * Wrapper para atualização em background que não trava a resposta principal.
-   */
   private async backgroundUpdate<T>(
     key: string,
     fetcher: () => Promise<T>,
     ttl: number,
   ): Promise<void> {
-    // Apenas chamamos o resolverFetch. O Coalescer cuida de não duplicar.
     await this.resolveFetch(key, fetcher, ttl);
   }
 
-  /**
-   * Limpa uma nova chave manualmente
-   */
   public async delete(key: string): Promise<void> {
     await this.storage.delete(key);
+  }
+
+  /**
+   * Type Guard para verificar se o Storage suporta Lock
+   */
+  private isLockAdapter(adapter: StorageAdapter): adapter is StorageAdapter & LockAdapter {
+    return "acquire" in adapter && typeof (adapter as any).acquire === "function";
+  }
+
+  /**
+   * Polling: Espera o dado aparecer no cache
+   */
+  private async waitForRemoteUpdate<T>(key: string): Promise<T> {
+    const pollInterval = 100; // 100ms
+    const maxRetries = 30; // 3 segundos de espera máxima
+
+    for (let i = 0; i < maxRetries; i++) {
+      await new Promise((r) => setTimeout(r, pollInterval));
+
+      const cached = await this.storage.get<T>(key);
+      // Se achou e é válido (ou aceitamos stale aqui também? Melhor ser fresco)
+      if (cached) {
+        return cached.value;
+      }
+    }
+    throw new Error("Distributed lock timeout: Data did not appear in cache");
   }
 }
