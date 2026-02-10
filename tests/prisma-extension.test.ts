@@ -67,7 +67,26 @@ describe("Prisma Extension", () => {
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining("prisma:User:findUnique"), // Corrigido para findUnique
       expect.any(Function),
-      expect.objectContaining({ ttl: 5000 }), 
+      expect.objectContaining({ ttl: 5000 }),
     );
+  });
+
+  it("should cache findMany calls", async () => {
+    const arca = new Arca();
+    const client = createMockExtendedClient(arca);
+    const args = { where: { active: true } };
+
+    // 1. Primeira chamada (Miss)
+    const result1 = await client.user.findManyCached(args);
+    // Noda: O mock retorna um array no findMany
+    expect(result1).toEqual([{ id: 1, name: "Alice" }]);
+    expect(mockPrismaContext.findMany).toHaveBeenCalledTimes(1);
+
+    // 2. Segunda chamada (Hit)
+    const result2 = await client.user.findManyCached(args);
+    expect(result2).toEqual([{ id: 1, name: "Alice" }]);
+
+    // Cache protegeu o banco
+    expect(mockPrismaContext.findMany).toHaveBeenCalledTimes(1);
   });
 });
