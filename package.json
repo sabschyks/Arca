@@ -57,6 +57,7 @@
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "husky": "^9.1.7",
     "ioredis-mock": "^8.13.1",
+    "prisma": "^7.3.0",
     "semantic-release": "^25.0.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
@@ -64,5 +65,13 @@
   },
   "dependencies": {
     "ioredis": "^5.9.2"
+  },
+  "peerDependencies": {
+    "@prisma/client": "7.3.0"
+  },
+  "peerDependenciesMeta": {
+    "@prisma/client": {
+      "optional": true
+    }
   }
 }
