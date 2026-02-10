@@ -5,6 +5,7 @@ import type { ArcaEvents, ArcaOptions, FetchOptions, LockAdapter, StorageAdapter
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
+export * from "./integrations/prisma";
 export * from "./types";
 
 export declare interface IArca {
@@ -98,8 +99,6 @@ export class Arca extends EventEmitter {
         const value = await fetcher();
         await this.storage.set(key, value, ttl);
         return value;
-      } catch (err) {
-        throw err;
       } finally {
         // Sempre liberar o lock
         if (lockAdapter) {
