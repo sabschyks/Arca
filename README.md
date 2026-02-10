@@ -68,7 +68,7 @@ yarn add @sabschyks/arca
 import { Arca } from '@sabschyks/arca';
 
 // 1. Initialize Arca (defaults to in-memory storage)
-const arca = new Arca({ defaultTtl: 60_000 }); // 1 minute
+const arca = new Arca({ defaultTtl: 60000 }); // 1 minute
 
 async function getUserProfile(userId: string) {
   // 2. Wrap your expensive operation
@@ -193,3 +193,6 @@ Arca shines when:
 * Cache expiration causes **database spikes**.
 * You want **zero-config protection** against stampedes.
 
+---
+
+> Project maintained by Sabrinna Guimarães (sabschyks).
