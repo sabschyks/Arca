@@ -6,6 +6,7 @@ import type { ArcaEvents, ArcaOptions, FetchOptions, LockAdapter, StorageAdapter
 export * from "./adapters/memory";
 export * from "./adapters/redis";
 export * from "./integrations/prisma";
+export * from "./integrations/typeorm";
 export * from "./types";
 
 export declare interface IArca {
