@@ -67,7 +67,8 @@
     "ioredis": "^5.9.2"
   },
   "peerDependencies": {
-    "@prisma/client": "7.3.0"
+    "@prisma/client": "7.3.0",
+    "typeorm": ">=0.3.0"
   },
   "peerDependenciesMeta": {
     "@prisma/client": {
