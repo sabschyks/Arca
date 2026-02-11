@@ -12,6 +12,10 @@ Prevent cache stampedes, eliminate duplicated fetches, and keep your APIs fast u
 </div>
 
 ---
+> [!NOTE]
+> This project is no longer maintained. No further updates, bug fixes, or support will be provided.
+
+---
 
 ## 🚨 The Problem: Cache Stampede
 
