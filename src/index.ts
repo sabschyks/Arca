@@ -1,20 +1,37 @@
+// biome-ignore assist/source/organizeImports: <Bug?>
 import { EventEmitter } from "node:events";
 import { MemoryAdapter } from "./adapters/memory";
 import { Coalescer } from "./core/coalescer";
-import type { ArcaEvents, ArcaOptions, FetchOptions, LockAdapter, StorageAdapter } from "./types";
+import type {
+  ArcaEvents,
+  ArcaOptions,
+  FetchOptions,
+  LockAdapter,
+  Logger,
+  Metrics,
+  StorageAdapter,
+} from "./types";
+import { createPinoLogger } from "./observability/pino-logger";
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
 export * from "./integrations/prisma";
 export * from "./integrations/typeorm";
+export * from "./observability/pino-logger";
+export * from "./observability/prometheus-metrics";
 export * from "./types";
 
 export declare interface IArca {
   on<U extends keyof ArcaEvents>(event: U, listener: ArcaEvents[U]): this;
-  emit<U extends keyof ArcaEvents>(event: U, ...args: Parameters<ArcaEvents[U]>): boolean;
+  emit<U extends keyof ArcaEvents>(
+    event: U,
+    ...args: Parameters<ArcaEvents[U]>
+  ): boolean;
 }
 
 export class Arca extends EventEmitter {
+  private logger: Logger;
+  private metrics?: Metrics;
   private storage: StorageAdapter;
   private coalescer: Coalescer;
   private defaultTtl: number;
@@ -26,6 +43,10 @@ export class Arca extends EventEmitter {
     this.storage = options.storage || new MemoryAdapter();
     this.defaultTtl = options.defaultTtl || 60000;
     this.coalescer = new Coalescer();
+
+    // Default logger é pino, mas pode ser sobrescrito
+    this.logger = options.logger || createPinoLogger();
+    this.metrics = options.metrics;
   }
 
   public async get<T>(
@@ -40,40 +61,77 @@ export class Arca extends EventEmitter {
         const cached = await this.storage.get<T>(key);
 
         if (cached) {
-          const isExpired = Date.now() - cached.createdAt > cached.ttl;
+          const now = Date.now();
+          const isExpired = now - cached.createdAt > cached.ttl;
 
           if (!isExpired) {
             this.emit("hit", key);
+            this.metrics?.increment("cache_op", {
+              operation: "get",
+              status: "hit",
+              key,
+            });
+            this.logger.debug("Cache hit", { key });
             return cached.value;
           }
 
           // STALE
           this.emit("stale", key);
+          this.metrics?.increment("cache_op", {
+            operation: "get",
+            status: "stale",
+            key,
+          });
+          this.logger.info("Serving stale data", { key });
+
+          // Background update
           this.backgroundUpdate(key, fetcher, ttl).catch((err) => {
             this.emit("error", err);
+            this.logger.error("Background update failed", {
+              key,
+              error: err.message,
+            });
           });
 
           return cached.value;
         }
       } catch (err) {
+        this.logger.error("Storage access error", {
+          key,
+          error: (err as Error).message,
+        });
         this.emit("error", err instanceof Error ? err : new Error(String(err)));
       }
     }
 
     // MISS
     this.emit("miss", key);
+    this.metrics?.increment("cache_op", {
+      operation: "get",
+      status: "miss",
+      key,
+    });
+    this.logger.debug("Cache miss", { key });
+
     return this.resolveFetch(key, fetcher, ttl);
   }
 
   /**
    * Lógica Central: Coalescing + Distributed Locking
    */
-  private async resolveFetch<T>(key: string, fetcher: () => Promise<T>, ttl: number): Promise<T> {
+  private async resolveFetch<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl: number,
+  ): Promise<T> {
+    const startTime = Date.now();
+
     return this.coalescer.execute(key, async () => {
       // 1. Verificar suporte a Lock
       // Prioridade: Lock explícito > Storage (se suportar Lock)
       const lockAdapter =
-        this.options.lock || (this.isLockAdapter(this.storage) ? this.storage : null);
+        this.options.lock ||
+        (this.isLockAdapter(this.storage) ? this.storage : null);
 
       if (lockAdapter) {
         // Tenta lockar por 5s (tempo seguro para o fetcher rodar)
@@ -82,6 +140,7 @@ export class Arca extends EventEmitter {
         if (!acquired) {
           // ALGUÉM JÁ PEGOU O LOCK EM OUTRO SERVIDOR.
           // Não rodamos o fetcher. Esperamos o outro servidor atualizar o cache.
+          this.logger.debug("Waiting for remote update", { key });
           try {
             return await this.waitForRemoteUpdate<T>(key);
           } catch (_err) {
@@ -89,7 +148,9 @@ export class Arca extends EventEmitter {
             // (Melhor duplicar trabalho do que falhar a request)
             this.emit(
               "error",
-              new Error(`Lock wait timeout for ${key}, falling back to local fetch`),
+              new Error(
+                `Lock wait timeout for ${key}, falling back to local fetch`,
+              ),
             );
           }
         }
@@ -98,8 +159,19 @@ export class Arca extends EventEmitter {
       // 2. Executa Fetch (Se pegou lock ou não tem lock)
       try {
         const value = await fetcher();
+        const duration = (Date.now() - startTime) / 1000;
+
+        this.metrics?.observe("fetch_duration", duration, { key });
+        this.logger.info("Fetch completed succesfully", { key, duration });
+
         await this.storage.set(key, value, ttl);
         return value;
+      } catch (err) {
+        this.logger.error("Fetch operation failed", {
+          key,
+          error: (err as Error).message,
+        });
+        throw err;
       } finally {
         // Sempre liberar o lock
         if (lockAdapter) {
@@ -124,8 +196,12 @@ export class Arca extends EventEmitter {
   /**
    * Type Guard para verificar se o Storage suporta Lock
    */
-  private isLockAdapter(adapter: StorageAdapter): adapter is StorageAdapter & LockAdapter {
-    return "acquire" in adapter && typeof (adapter as any).acquire === "function";
+  private isLockAdapter(
+    adapter: StorageAdapter,
+  ): adapter is StorageAdapter & LockAdapter {
+    return (
+      "acquire" in adapter && typeof (adapter as any).acquire === "function"
+    );
   }
 
   /**

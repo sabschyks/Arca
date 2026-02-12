@@ -38,7 +38,7 @@ describe('Distributed Lock', () => {
     // O Lock impediu a segunda execução.
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-
+  
   it('should wait for remote update via polling', async () => {
     const sharedMemory = new MemoryAdapter();
     const arca = new Arca({ storage: sharedMemory });

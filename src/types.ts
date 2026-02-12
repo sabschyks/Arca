@@ -24,10 +24,24 @@ export interface StorageAdapter {
   clear(): Promise<void>;
 }
 
+export interface Logger {
+  info(msg: string, obj?: any): void;
+  error(msg: string, obj?: any): void;
+  debug(msg: string, obj?: any): void;
+  warn(msg: string, obj?: any): void;
+}
+
+export interface Metrics {
+  increment(name: string, labels?: Record<string, string>): void;
+  observe(name: string, value: number, labels?: Record<string, string>): void;
+}
+
 export interface ArcaOptions {
   storage?: StorageAdapter;
   lock?: LockAdapter;
   defaultTtl?: number;
+  logger?: Logger;
+  metrics?: Metrics;
 }
 
 export interface FetchOptions {
