@@ -31,7 +31,7 @@ jobs:
               run: pnpm install --frozen-lockfile
 
             - name: Lint (Biome)
-              run: pnpm lint
+              run: pnpm lint:fix
 
             - name: Type Check (TSC)
               run: pnpm typecheck
