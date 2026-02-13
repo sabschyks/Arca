@@ -2,6 +2,7 @@
 import { EventEmitter } from "node:events";
 import { MemoryAdapter } from "./adapters/memory";
 import { Coalescer } from "./core/coalescer";
+import { CircuitBreaker } from "./core/circuit-breaker";
 import type {
   ArcaEvents,
   ArcaOptions,
@@ -30,6 +31,7 @@ export declare interface IArca {
 }
 
 export class Arca extends EventEmitter {
+  private cb?: CircuitBreaker;
   private logger: Logger;
   private metrics?: Metrics;
   private storage: StorageAdapter;
@@ -47,6 +49,13 @@ export class Arca extends EventEmitter {
     // Default logger é pino, mas pode ser sobrescrito
     this.logger = options.logger || createPinoLogger();
     this.metrics = options.metrics;
+
+    if (options.circuitBreaker) {
+      this.cb = new CircuitBreaker({
+        threshold: options.circuitBreaker.failureThreshold,
+        resetTimeout: options.circuitBreaker.resetTimeout,
+      });
+    }
   }
 
   public async get<T>(
@@ -56,9 +65,20 @@ export class Arca extends EventEmitter {
   ): Promise<T> {
     const ttl = options.ttl || this.defaultTtl;
 
+    if (this.cb?.isOpen()) {
+      this.logger.warn("Circuit is OPEN. Bypassing cache storage.", { key });
+      this.metrics?.increment("cache_op", {
+        operation: "get",
+        status: "bypass",
+        key,
+      });
+      return this.resolveFetch(key, fetcher, ttl);
+    }
+
     if (!options.forceRefresh) {
       try {
         const cached = await this.storage.get<T>(key);
+        this.cb?.recordSuccess(); // Operação no storage funcionou
 
         if (cached) {
           const now = Date.now();
@@ -96,8 +116,8 @@ export class Arca extends EventEmitter {
           return cached.value;
         }
       } catch (err) {
-        this.logger.error("Storage access error", {
-          key,
+        this.cb?.recordFailure(); // Falha no Storage!
+        this.logger.error("Storage recording failure", {
           error: (err as Error).message,
         });
         this.emit("error", err instanceof Error ? err : new Error(String(err)));
@@ -164,7 +184,17 @@ export class Arca extends EventEmitter {
         this.metrics?.observe("fetch_duration", duration, { key });
         this.logger.info("Fetch completed succesfully", { key, duration });
 
-        await this.storage.set(key, value, ttl);
+        try {
+          await this.storage.set(key, value, ttl);
+          this.cb?.recordSuccess();
+        } catch (err) {
+          this.cb?.recordFailure();
+          this.logger.error("Storage set failed", {
+            key,
+            error: (err as Error).message,
+          });
+        }
+
         return value;
       } catch (err) {
         this.logger.error("Fetch operation failed", {

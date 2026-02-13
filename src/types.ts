@@ -4,6 +4,11 @@ export interface CacheEntry<T> {
   ttl: number; // Time to live em ms
 }
 
+export interface CircuitBreakerOptions {
+  failureThreshold: number; // Quantos erros para abrir o circuito
+  resetTimeout: number; // Quanto tempo (ms) esperar para tentar o Redis de novo
+}
+
 export interface LockAdapter {
   /**
    * Tenta adquirir o lock.
@@ -42,6 +47,7 @@ export interface ArcaOptions {
   defaultTtl?: number;
   logger?: Logger;
   metrics?: Metrics;
+  circuitBreaker?: CircuitBreakerOptions;
 }
 
 export interface FetchOptions {

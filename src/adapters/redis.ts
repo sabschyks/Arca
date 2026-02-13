@@ -1,15 +1,34 @@
-import Redis, { type Redis as RedisClient } from "ioredis";
+import Redis, { type RedisOptions, type Redis as RedisClient } from "ioredis";
 import type { CacheEntry, LockAdapter, StorageAdapter } from "../types";
 
 export class RedisAdapter implements StorageAdapter, LockAdapter {
   private client: RedisClient;
 
-  constructor(connectionStringOrClient: string | RedisClient) {
+  constructor(
+    connectionStringOrClient: string | RedisClient,
+    options?: RedisOptions,
+  ) {
+    const defaultOptions: RedisOptions = {
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+
+      showFriendlyErrorStack: false
+    };
     if (typeof connectionStringOrClient === "string") {
-      this.client = new Redis(connectionStringOrClient);
+      this.client = new Redis(connectionStringOrClient, {
+        ...defaultOptions,
+        ...options,
+      });
     } else {
       this.client = connectionStringOrClient;
     }
+
+    this.client.on("error", (err) => {});
   }
 
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
