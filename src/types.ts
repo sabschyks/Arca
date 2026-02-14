@@ -48,11 +48,16 @@ export interface ArcaOptions {
   logger?: Logger;
   metrics?: Metrics;
   circuitBreaker?: CircuitBreakerOptions;
+  l1Cache?: {
+    enabled: boolean;
+    maxSize?: number; // Ex: 5000 itens
+  };
 }
 
 export interface FetchOptions {
   forceRefresh?: boolean;
   ttl?: number; // TTL específico para esta chamada
+  tags?: string[];
 }
 
 export type ArcaEvents = {
@@ -61,4 +66,5 @@ export type ArcaEvents = {
   stale: (key: string) => void;
   coalesced: (key: string) => void;
   error: (err: Error) => void;
+  invalidated: (tags: string[]) => void;
 };
