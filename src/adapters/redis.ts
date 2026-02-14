@@ -119,4 +119,17 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
       await this.client.quit();
     }
   }
+
+  async addKeysToTag(tag: string, keys: string[]): Promise<void> {
+    const tagKey = `tag:${tag}`;
+    await this.client.sadd(tagKey, ...keys);
+  }
+
+  async getKeysByTag(tag: string): Promise<string[]> {
+    return this.client.smembers(`tag:${tag}`);
+  }
+
+  async deleteTag(tag: string): Promise<void> {
+    await this.client.del(`tag:${tag}`);
+  }
 }
