@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TieredStorageAdapter } from "../src/core/tiered-cache";
 import { LocalLruAdapter } from "../src/adapters/local-lru";
 import { RedisAdapter } from "../src/adapters/redis";
+import RedisMock from 'ioredis-mock'
 
 // --- MOCK ROBUSTO DO REDIS ---
 class MockRedisBus {
@@ -210,8 +211,9 @@ describe("Hybrid Cache (L1 + L2) Coverage", () => {
   });
 
   it("should proxy tag operations to L2 storage", async () => {
+    const redis = new RedisMock();
     const l1 = new LocalLruAdapter();
-    const l2 = new RedisAdapter("redis://localhost:6379");
+    const l2 = new RedisAdapter(redis);
     const tiered = new TieredStorageAdapter(l1, l2);
 
     await new Promise(resolve => setTimeout(resolve, 50))

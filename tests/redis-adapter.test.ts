@@ -5,6 +5,7 @@ import Redis from "ioredis";
 
 describe("RedisAdapter", () => {
   let redis: any;
+  const redis_mock = new RedisMock;
   let adapter: RedisAdapter;
 
   beforeEach(() => {
@@ -29,7 +30,7 @@ describe("RedisAdapter", () => {
   });
 
   it("should initialize using connection string", () => {
-    const adapter = new RedisAdapter("redis://localhost:6379");
+    const adapter = new RedisAdapter(redis_mock);
     expect(adapter).toBeDefined();
   });
 
@@ -39,7 +40,7 @@ describe("RedisAdapter", () => {
   });
 
   it("should duplicate using stored options", () => {
-    const adapter = new RedisAdapter("redis://localhost:6379");
+    const adapter = new RedisAdapter(redis_mock);
     const dup = adapter.duplicate();
     expect(dup).toBeDefined();
   });
@@ -146,7 +147,8 @@ describe("RedisAdapter", () => {
 describe('RedisAdapter - Tags Integration', () => {
   it('should store and retrieve keys by tag in Redis', async () => {
     // Usamos o adaptador real (certifique-se que o Redis local está on)
-    const adapter = new RedisAdapter('redis://localhost:6379');
+    const redis = new RedisMock();
+    const adapter = new RedisAdapter(redis);
 
     await new Promise(resolve => setTimeout(resolve, 50))
     
