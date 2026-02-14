@@ -5,7 +5,10 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
   private client: RedisClient;
   private options?: RedisOptions; // Guardamos options para poder duplicar
 
-  constructor(connectionStringOrClient: string | RedisClient, options?: RedisOptions) {
+  constructor(
+    connectionStringOrClient: string | RedisClient,
+    options?: RedisOptions,
+  ) {
     const defaultOptions: RedisOptions = {
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
@@ -33,10 +36,10 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
 
     try {
       return JSON.parse(res);
-    } catch(_err) {
+    } catch (_err) {
       // Se o JSON estiver corrompido, tratamos como MISS.
       // O Arca vai do lado fresco no banco de sobrescrever no Redis.
-      return null
+      return null;
     }
   }
 
@@ -79,7 +82,7 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
       // Se temos as opções originais, criamos um novo cliente com override
       return new RedisAdapter(new Redis({ ...this.options, ...overrides }));
     }
-    
+
     // Se recebemos uma instância pronta, usamos o duplicate do ioredis com override
     return new RedisAdapter(this.client.duplicate(overrides));
   }
@@ -95,7 +98,10 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
    * Entra em modo Subscriber e ouve mensagens.
    * ATENÇÃO: Esta instância ficará bloqueada apenas ouvindo mensagens.
    */
-  public async subscribe(channel: string, onMessage: (message: string) => void): Promise<void> {
+  public async subscribe(
+    channel: string,
+    onMessage: (message: string) => void,
+  ): Promise<void> {
     await this.client.subscribe(channel);
 
     this.client.on("message", (chn, msg) => {
@@ -106,9 +112,11 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
   }
 
   /**
-   * Método para desconectar (útil para testes e graceful shutdown)
+   * Encerra a conexão com o Redis de forma limpa.
    */
   public async disconnect(): Promise<void> {
-    await this.client.quit();
+    if (this.client.status !== "end") {
+      await this.client.quit();
+    }
   }
 }
