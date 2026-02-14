@@ -161,6 +161,31 @@ export class Arca extends EventEmitter {
   }
 
   /**
+   * Fecha todas as conexões e limpa recursos.
+   * Chame isso no 'onClose' do seu servidor (ex: Fastify/Express).
+   */
+  public async dispose(): Promise<void> {
+    this.logger.info("Shutting down Arca...");
+
+    // 1. Se for Tiered, disconecta o subscriber
+    if (this.storage instanceof TieredStorageAdapter) {
+      await this.storage.disconnect();
+    }
+
+    // 2. Se o storage for Redis, fecha a conexão principal
+    if (this.storage instanceof RedisAdapter) {
+      await this.storage.disconnect();
+    }
+
+    // 2. Se o lock for Redis e for diferente do storage, fecha também
+    if (this.options.lock instanceof RedisAdapter && this.options.lock !== this.storage) {
+      await this.options.lock.disconnect();
+    }
+
+    this.emit('error', new Error("Arca instance disposed")); // Sinaliza encerramento
+  }
+
+  /**
    * Lógica Central: Coalescing + Distributed Locking
    */
   private async resolveFetch<T>(
