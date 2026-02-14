@@ -1,7 +1,7 @@
 export enum CircuitState {
-  CLOSED = 'CLOSED',
-  OPEN = 'OPEN',
-  HALF_OPEN = 'HALF_OPEN'
+  CLOSED = "CLOSED",
+  OPEN = "OPEN",
+  HALF_OPEN = "HALF_OPEN",
 }
 
 export class CircuitBreaker {
@@ -21,7 +21,7 @@ export class CircuitBreaker {
       }
       return true; // Bloqueia
     }
-    
+
     // Se está HALF_OPEN ou CLOSED, deixa passar
     return false;
   }

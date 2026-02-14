@@ -69,5 +69,11 @@ describe('Circuit Breaker Resilience', () => {
     // Próxima chamada deve ir ao storage normalmente.
     await arca.get('key', fetcher);
     expect(failingStorage.get).toHaveBeenCalledTimes(4);
+
+    // @ts-ignore
+    if (arca.cb) {
+      // @ts-ignore
+      expect(arca.cb.getState()).toBeDefined();
+    }
   });
 });

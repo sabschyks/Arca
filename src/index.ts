@@ -13,6 +13,9 @@ import type {
   StorageAdapter,
 } from "./types";
 import { createPinoLogger } from "./observability/pino-logger";
+import { RedisAdapter } from "./adapters/redis";
+import { LocalLruAdapter } from "./adapters/local-lru";
+import { TieredStorageAdapter } from "./core/tiered-cache";
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
@@ -20,14 +23,13 @@ export * from "./integrations/prisma";
 export * from "./integrations/typeorm";
 export * from "./observability/pino-logger";
 export * from "./observability/prometheus-metrics";
+export * from "./core/tiered-cache";
+export * from "./adapters/local-lru";
 export * from "./types";
 
 export declare interface IArca {
   on<U extends keyof ArcaEvents>(event: U, listener: ArcaEvents[U]): this;
-  emit<U extends keyof ArcaEvents>(
-    event: U,
-    ...args: Parameters<ArcaEvents[U]>
-  ): boolean;
+  emit<U extends keyof ArcaEvents>(event: U, ...args: Parameters<ArcaEvents[U]>): boolean;
 }
 
 export class Arca extends EventEmitter {
@@ -50,6 +52,28 @@ export class Arca extends EventEmitter {
     this.logger = options.logger || createPinoLogger();
     this.metrics = options.metrics;
 
+    const mainStorage = options.storage || new MemoryAdapter();
+
+    // Verifica se L1 está ativado E se o storage principal é Redis
+    // (O Tiered Cache precisa do Redis para Pub/Sub)
+    if (options.l1Cache?.enabled && mainStorage instanceof RedisAdapter) {
+      this.logger.debug("Initializing Hybrid Cache (L1: LRU + L2: Redis)");
+      
+      const l1 = new LocalLruAdapter({ 
+        max: options.l1Cache.maxSize,
+        ttl: this.defaultTtl // Opcional: herdar TTL padrão
+      });
+
+      // Envolve o Redis com o Tiered Adapter
+      this.storage = new TieredStorageAdapter(l1, mainStorage, this.metrics);;
+    } else {
+      if (options.l1Cache?.enabled && !(mainStorage instanceof RedisAdapter)) {
+        this.logger.warn("L1 Cache was requested but main storage is not Redis. Falling back to single layer.");
+      }
+      this.storage = mainStorage;
+    }
+
+    // Circuit Breaker
     if (options.circuitBreaker) {
       this.cb = new CircuitBreaker({
         threshold: options.circuitBreaker.failureThreshold,
@@ -149,6 +173,8 @@ export class Arca extends EventEmitter {
     return this.coalescer.execute(key, async () => {
       // 1. Verificar suporte a Lock
       // Prioridade: Lock explícito > Storage (se suportar Lock)
+      // NOTA: Se usarmos TieredStorage, ele não é um LockAdapter direto, 
+      // então dependemos de 'options.lock' ser passado explicitamente.
       const lockAdapter =
         this.options.lock ||
         (this.isLockAdapter(this.storage) ? this.storage : null);
@@ -158,7 +184,7 @@ export class Arca extends EventEmitter {
         const acquired = await lockAdapter.acquire(key, 5000);
 
         if (!acquired) {
-          // ALGUÉM JÁ PEGOU O LOCK EM OUTRO SERVIDOR.
+          // "ALGUÉM JÁ PEGOU O LOCK EM OUTRO SERVIDOR".
           // Não rodamos o fetcher. Esperamos o outro servidor atualizar o cache.
           this.logger.debug("Waiting for remote update", { key });
           try {

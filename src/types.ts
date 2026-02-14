@@ -48,6 +48,10 @@ export interface ArcaOptions {
   logger?: Logger;
   metrics?: Metrics;
   circuitBreaker?: CircuitBreakerOptions;
+  l1Cache?: {
+    enabled: boolean,
+    maxSize?: number, // Ex: 5000 itens
+  }
 }
 
 export interface FetchOptions {
