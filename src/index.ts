@@ -58,17 +58,19 @@ export class Arca extends EventEmitter {
     // (O Tiered Cache precisa do Redis para Pub/Sub)
     if (options.l1Cache?.enabled && mainStorage instanceof RedisAdapter) {
       this.logger.debug("Initializing Hybrid Cache (L1: LRU + L2: Redis)");
-      
-      const l1 = new LocalLruAdapter({ 
+
+      const l1 = new LocalLruAdapter({
         max: options.l1Cache.maxSize,
-        ttl: this.defaultTtl // Opcional: herdar TTL padrão
+        ttl: this.defaultTtl, // Opcional: herdar TTL padrão
       });
 
       // Envolve o Redis com o Tiered Adapter
-      this.storage = new TieredStorageAdapter(l1, mainStorage, this.metrics);;
+      this.storage = new TieredStorageAdapter(l1, mainStorage, this.metrics);
     } else {
       if (options.l1Cache?.enabled && !(mainStorage instanceof RedisAdapter)) {
-        this.logger.warn("L1 Cache was requested but main storage is not Redis. Falling back to single layer.");
+        this.logger.warn(
+          "L1 Cache was requested but main storage is not Redis. Falling back to single layer.",
+        );
       }
       this.storage = mainStorage;
     }
@@ -96,7 +98,7 @@ export class Arca extends EventEmitter {
         status: "bypass",
         key,
       });
-      return this.resolveFetch(key, fetcher, ttl);
+      return this.resolveFetch(key, fetcher, ttl, options.tags);
     }
 
     if (!options.forceRefresh) {
@@ -157,7 +159,7 @@ export class Arca extends EventEmitter {
     });
     this.logger.debug("Cache miss", { key });
 
-    return this.resolveFetch(key, fetcher, ttl);
+    return this.resolveFetch(key, fetcher, ttl, options.tags);
   }
 
   /**
@@ -182,7 +184,46 @@ export class Arca extends EventEmitter {
       await this.options.lock.disconnect();
     }
 
-    this.emit('error', new Error("Arca instance disposed")); // Sinaliza encerramento
+    this.emit("disposed"); // Sinaliza encerramento
+    this.logger.debug("Arca engine destroyed");
+  }
+
+  public async invalidateTags(tags: string[]): Promise<void> {
+    if (tags.length === 0) return;
+
+    const summary: Record<string, { keysDeleted: number }> = {};
+    let totalKeysDeleted = 0;
+
+    for (const tag of tags) {
+      const storage = this.storage as any;
+
+      // 1. Busca as chaves associadas à tag no Storage
+      // (Isso assume que o Storage suporta busca por tag, como o nosso Redis)
+      if (typeof storage.getKeysByTag === "function") {
+        const keys = await storage.getKeysByTag(tag);
+        const count = keys?.length || 0;
+
+        if (count > 0) {
+          // 2. Limpa o set da tag
+          await Promise.all(keys.map((key: string) => this.storage.delete(key)));
+          totalKeysDeleted += count;
+          summary[tag] = { keysDeleted: count };
+        }
+
+        if (typeof storage.deleteTag === "function") {
+          await storage.deleteTag(tag);
+        }
+      }
+    }
+    if (totalKeysDeleted > 0) {
+      this.logger.info("Tags invalidated successfully", {
+        tags,
+        totalKeysDeleted,
+        details: summary,
+      });
+    }
+
+    this.emit("invalidated", tags);
   }
 
   /**
@@ -192,17 +233,17 @@ export class Arca extends EventEmitter {
     key: string,
     fetcher: () => Promise<T>,
     ttl: number,
+    tags?: string[],
   ): Promise<T> {
     const startTime = Date.now();
 
     return this.coalescer.execute(key, async () => {
       // 1. Verificar suporte a Lock
       // Prioridade: Lock explícito > Storage (se suportar Lock)
-      // NOTA: Se usarmos TieredStorage, ele não é um LockAdapter direto, 
+      // NOTA: Se usarmos TieredStorage, ele não é um LockAdapter direto,
       // então dependemos de 'options.lock' ser passado explicitamente.
       const lockAdapter =
-        this.options.lock ||
-        (this.isLockAdapter(this.storage) ? this.storage : null);
+        this.options.lock || (this.isLockAdapter(this.storage) ? this.storage : null);
 
       if (lockAdapter) {
         // Tenta lockar por 5s (tempo seguro para o fetcher rodar)
@@ -219,9 +260,7 @@ export class Arca extends EventEmitter {
             // (Melhor duplicar trabalho do que falhar a request)
             this.emit(
               "error",
-              new Error(
-                `Lock wait timeout for ${key}, falling back to local fetch`,
-              ),
+              new Error(`Lock wait timeout for ${key}, falling back to local fetch`),
             );
           }
         }
@@ -233,10 +272,16 @@ export class Arca extends EventEmitter {
         const duration = (Date.now() - startTime) / 1000;
 
         this.metrics?.observe("fetch_duration", duration, { key });
-        this.logger.info("Fetch completed succesfully", { key, duration });
+        this.logger.debug("Fetch completed succesfully", { key, duration });
 
         try {
+          // 1. Salva o valor no cache
           await this.storage.set(key, value, ttl);
+
+          if (tags && tags.length > 0 && typeof (this.storage as any).addKeysToTag === "function") {
+            await Promise.all(tags.map((tag) => (this.storage as any).addKeysToTag(tag, [key])));
+          }
+
           this.cb?.recordSuccess();
         } catch (err) {
           this.cb?.recordFailure();
@@ -277,12 +322,8 @@ export class Arca extends EventEmitter {
   /**
    * Type Guard para verificar se o Storage suporta Lock
    */
-  private isLockAdapter(
-    adapter: StorageAdapter,
-  ): adapter is StorageAdapter & LockAdapter {
-    return (
-      "acquire" in adapter && typeof (adapter as any).acquire === "function"
-    );
+  private isLockAdapter(adapter: StorageAdapter): adapter is StorageAdapter & LockAdapter {
+    return "acquire" in adapter && typeof (adapter as any).acquire === "function";
   }
 
   /**

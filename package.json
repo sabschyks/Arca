@@ -59,6 +59,7 @@
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "husky": "^9.1.7",
     "ioredis-mock": "^8.13.1",
+    "mitata": "^1.0.34",
     "prisma": "^7.3.0",
     "semantic-release": "^25.0.3",
     "tsup": "^8.5.1",

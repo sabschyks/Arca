@@ -5,10 +5,7 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
   private client: RedisClient;
   private options?: RedisOptions; // Guardamos options para poder duplicar
 
-  constructor(
-    connectionStringOrClient: string | RedisClient,
-    options?: RedisOptions,
-  ) {
+  constructor(connectionStringOrClient: string | RedisClient, options?: RedisOptions) {
     const defaultOptions: RedisOptions = {
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
@@ -24,7 +21,7 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
       this.options = options; // Pode ser undefined se passou cliente pronto
     }
 
-    this.client.on("error", (err) => {
+    this.client.on("error", (_err) => {
       // Silencia erros globais para evitar crash do Node
     });
   }
@@ -98,10 +95,7 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
    * Entra em modo Subscriber e ouve mensagens.
    * ATENÇÃO: Esta instância ficará bloqueada apenas ouvindo mensagens.
    */
-  public async subscribe(
-    channel: string,
-    onMessage: (message: string) => void,
-  ): Promise<void> {
+  public async subscribe(channel: string, onMessage: (message: string) => void): Promise<void> {
     await this.client.subscribe(channel);
 
     this.client.on("message", (chn, msg) => {

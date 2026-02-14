@@ -1,4 +1,4 @@
-import { Counter, Histogram, Registry, Metric } from "prom-client";
+import { Counter, Histogram, type Metric, Registry } from "prom-client";
 import type { Metrics } from "../types";
 
 export class PrometheusMetrics implements Metrics {
@@ -31,14 +31,8 @@ export class PrometheusMetrics implements Metrics {
     });
 
     // Registrar no map para evitar recriação
-    this.metricsMap.set(
-      "arca_cache_operations_total",
-      this.cacheCounter
-    );
-    this.metricsMap.set(
-      "arca_fetch_duration_seconds",
-      this.fetchDuration
-    );
+    this.metricsMap.set("arca_cache_operations_total", this.cacheCounter);
+    this.metricsMap.set("arca_fetch_duration_seconds", this.fetchDuration);
   }
 
   public increment(name: string, labels: Record<string, string> = {}): void {
@@ -67,11 +61,7 @@ export class PrometheusMetrics implements Metrics {
     counter.inc(labels);
   }
 
-  public observe(
-    name: string,
-    value: number,
-    labels: Record<string, string> = {}
-  ): void {
+  public observe(name: string, value: number, labels: Record<string, string> = {}): void {
     // 🔹 Compatibilidade legado
     if (name === "fetch_duration") {
       this.fetchDuration.observe(labels, value);

@@ -25,7 +25,9 @@ export class TieredStorageAdapter implements StorageAdapter {
     this.subscriber = this.l2.duplicate();
 
     await this.subscriber.subscribe(this.channelName, (msg) => {
-      this.metrics?.increment('arca_sync_messages_total', { direction: 'received' });
+      this.metrics?.increment("arca_sync_messages_total", {
+        direction: "received",
+      });
 
       try {
         const payload = JSON.parse(msg);
@@ -47,14 +49,17 @@ export class TieredStorageAdapter implements StorageAdapter {
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
     // 1. Tenta L1 (Memória - Nanossegundos)
     const local = await this.l1.get<T>(key);
-    if (local) { 
+    if (local) {
       return local; // Retorno imediato
     }
-    
+
     // 2. Tenta L2 (Redis - Milissegundos)
     const remote = await this.l2.get<T>(key);
     if (remote) {
-      this.metrics?.increment('arca_hybric_op_total', { layer: 'l1', status: 'hit' })
+      this.metrics?.increment("arca_hybric_op_total", {
+        layer: "l1",
+        status: "hit",
+      });
 
       // "Cache Fill": Se achou no Redis, salva na memória local
       const age = Date.now() - remote.createdAt;
@@ -67,9 +72,34 @@ export class TieredStorageAdapter implements StorageAdapter {
       }
       return remote;
     }
-    this.metrics?.increment('arca_hybric_op_total', { layer: 'l1', status: 'miss' })
+    this.metrics?.increment("arca_hybric_op_total", {
+      layer: "l1",
+      status: "miss",
+    });
 
     return null;
+  }
+
+  // Repassa a busca de chaves para o L2 (Redis)
+  async getKeysByTag(tag: string): Promise<string[]> {
+    if (typeof (this.l2 as any).getKeysByTag === "function") {
+      return (this.l2 as any).getKeysByTag(tag);
+    }
+    return [];
+  }
+
+  // Repassa a associação de tags para o L2 (Redis)
+  async addKeysToTag(tag: string, keys: string[]): Promise<void> {
+    if (typeof (this.l2 as any).addKeysToTag === "function") {
+      await (this.l2 as any).addKeysToTag(tag, keys);
+    }
+  }
+
+  // Repassa a deleção da tag para o L2 (Redis)
+  async deleteTag(tag: string): Promise<void> {
+    if (typeof (this.l2 as any).deleteTag === "function") {
+      await (this.l2 as any).deleteTag(tag);
+    }
   }
 
   async set<T>(key: string, value: T, ttl: number): Promise<void> {
@@ -92,7 +122,7 @@ export class TieredStorageAdapter implements StorageAdapter {
   }
 
   private publishInvalidation(action: "delete" | "clear", key: string) {
-    this.metrics?.increment('arca_async_messages_total', { direction: 'sent' });
+    this.metrics?.increment("arca_async_messages_total", { direction: "sent" });
 
     const payload = JSON.stringify({
       action,
@@ -102,7 +132,7 @@ export class TieredStorageAdapter implements StorageAdapter {
 
     // Fire and Forget: não esperamos a pubilcação para retornar
     this.l2.publish(this.channelName, payload).catch((err) => {
-      this.metrics?.increment('arca_sync_errors_total', { op: 'publish' });
+      this.metrics?.increment("arca_sync_errors_total", { op: "publish" });
     });
   }
 
