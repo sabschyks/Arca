@@ -57,6 +57,7 @@ export interface ArcaOptions {
 export interface FetchOptions {
   forceRefresh?: boolean;
   ttl?: number; // TTL específico para esta chamada
+  tags?: string[];
 }
 
 export type ArcaEvents = {
@@ -65,4 +66,5 @@ export type ArcaEvents = {
   stale: (key: string) => void;
   coalesced: (key: string) => void;
   error: (err: Error) => void;
+  invalidated: (tags: string[]) => void;
 };
