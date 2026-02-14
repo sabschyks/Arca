@@ -101,11 +101,13 @@ export class TieredStorageAdapter implements StorageAdapter {
     });
 
     // Fire and Forget: não esperamos a pubilcação para retornar
-    this.l2.publish(this.channelName, payload).catch(console.error);
+    this.l2.publish(this.channelName, payload).catch((err) => {
+      this.metrics?.increment('arca_sync_errors_total', { op: 'publish' });
+    });
   }
 
   // Método auxiliar para fechar conexões (importante para testes)
-  async disconnect() {
+  public async disconnect(): Promise<void> {
     if (this.subscriber) {
       await this.subscriber.disconnect();
     }
