@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Arca } from "../src/index";
+import { Arca, MemoryAdapter } from "../src/index";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -107,5 +107,34 @@ describe("Arca Integration", () => {
     await arca.delete("del-key");
     await arca.get("del-key", fetcher);
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('should emit "disposed" and clean up resources on dispose', async () => {
+    const arca = new Arca();
+    const eventSpy = vi.fn();
+    arca.on("disposed", eventSpy);
+
+    await arca.dispose();
+
+    expect(eventSpy).toHaveBeenCalled();
+  });
+
+  it("should warn when L1 is enabled but storage is not Redis", () => {
+    const logger = {
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+      error: vi.fn(),
+    };
+
+    new Arca({
+      l1Cache: { enabled: true },
+      storage: new MemoryAdapter(),
+      logger: logger as any,
+    });
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Falling back to single layer"),
+    );
   });
 });

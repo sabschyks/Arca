@@ -18,7 +18,7 @@ describe("Observability Stack", () => {
     // 1. MISS
     await arca.get("test-key", fetcher);
 
-    expect(logger.info).toHaveBeenCalledWith(
+    expect(logger.debug).toHaveBeenCalledWith(
       expect.stringContaining("Fetch completed succesfully"),
       expect.objectContaining({ key: "test-key" }),
     );

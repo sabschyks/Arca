@@ -142,3 +142,24 @@ describe("RedisAdapter", () => {
     expect(adapter).toBeDefined();
   });
 });
+
+describe('RedisAdapter - Tags Integration', () => {
+  it('should store and retrieve keys by tag in Redis', async () => {
+    // Usamos o adaptador real (certifique-se que o Redis local está on)
+    const adapter = new RedisAdapter('redis://localhost:6379');
+
+    await new Promise(resolve => setTimeout(resolve, 50))
+    
+    await adapter.addKeysToTag('tag1', ['key1', 'key2']);
+    const keys = await adapter.getKeysByTag('tag1');
+    
+    expect(keys).toContain('key1');
+    expect(keys).toContain('key2');
+    
+    await adapter.deleteTag('tag1');
+    const emptyKeys = await adapter.getKeysByTag('tag1');
+    expect(emptyKeys.length).toBe(0);
+    
+    await adapter.disconnect();
+  });
+});

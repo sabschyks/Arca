@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TieredStorageAdapter } from "../src/core/tiered-cache";
 import { LocalLruAdapter } from "../src/adapters/local-lru";
-import type { RedisAdapter } from "../src/adapters/redis";
+import { RedisAdapter } from "../src/adapters/redis";
 
 // --- MOCK ROBUSTO DO REDIS ---
 class MockRedisBus {
@@ -207,5 +207,22 @@ describe("Hybrid Cache (L1 + L2) Coverage", () => {
     await new Promise((r) => setTimeout(r, 20));
     // Não deve dar throw no processo
     expect(true).toBe(true);
+  });
+
+  it("should proxy tag operations to L2 storage", async () => {
+    const l1 = new LocalLruAdapter();
+    const l2 = new RedisAdapter("redis://localhost:6379");
+    const tiered = new TieredStorageAdapter(l1, l2);
+
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    // Chamando os métodos de proxy diretamente para garantir cobertura
+    await tiered.addKeysToTag("proxy-tag", ["k1"]);
+    const keys = await tiered.getKeysByTag("proxy-tag");
+    expect(keys).toContain("k1");
+
+    await tiered.deleteTag("proxy-tag");
+    await tiered.disconnect();
+    await l2.disconnect();
   });
 });
