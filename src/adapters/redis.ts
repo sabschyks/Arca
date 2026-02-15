@@ -28,6 +28,7 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
 
   // Métodos de Storage (Padrão)
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
+    await this.ensureConnection();
     const res = await this.client.get(key);
     if (!res) return null;
 
@@ -41,28 +42,66 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
   }
 
   async set<T>(key: string, value: T, ttl: number): Promise<void> {
+    await this.ensureConnection();
     const entry: CacheEntry<T> = { value, createdAt: Date.now(), ttl };
     // 'PX' define TTL em milissegundos
     await this.client.set(key, JSON.stringify(entry), "PX", ttl);
   }
 
   async delete(key: string): Promise<void> {
+    await this.ensureConnection();
     await this.client.del(key);
   }
 
   async clear(): Promise<void> {
+    await this.ensureConnection();
     await this.client.flushdb();
   }
 
   // Métodos de Lock
   async acquire(key: string, ttl: number): Promise<boolean> {
+    await this.ensureConnection();
     const lockKey = `lock:${key}`;
     const acquired = await this.client.set(lockKey, "1", "PX", ttl, "NX");
     return acquired === "OK";
   }
 
   async release(key: string): Promise<void> {
+    await this.ensureConnection();
     await this.client.del(`lock:${key}`);
+  }
+
+  /**
+   * Helper privado para garantir que a conexão esteja pronta antes de executar comandos.
+   * Se estiver conectado, espera. Se estiver desconectado, tenta reconectar.
+   */
+  private async ensureConnection(): Promise<void> {
+    if (this.client.status === "ready") return;
+
+    if (this.client.status === "wait") {
+      await this.client.connect();
+    }
+
+    // Se estiver conectado, espera o evento 'ready'
+    if (["connecting", "reconnecting"].includes(this.client.status)) {
+      await new Promise<void>((resolve, reject) => {
+        const onReady = () => {
+          cleanup();
+          resolve();
+        };
+        const onError = (err: Error) => {
+          cleanup();
+          reject(err);
+        };
+        const cleanup = () => {
+          this.client.removeListener("ready", onReady);
+          this.client.removeListener("error", onError);
+        };
+
+        this.client.once("ready", onReady);
+        this.client.once("error", onError);
+      });
+    }
   }
 
   /**
@@ -115,15 +154,18 @@ export class RedisAdapter implements StorageAdapter, LockAdapter {
   }
 
   async addKeysToTag(tag: string, keys: string[]): Promise<void> {
+    await this.ensureConnection();
     const tagKey = `tag:${tag}`;
     await this.client.sadd(tagKey, ...keys);
   }
 
   async getKeysByTag(tag: string): Promise<string[]> {
+    await this.ensureConnection();
     return this.client.smembers(`tag:${tag}`);
   }
 
   async deleteTag(tag: string): Promise<void> {
+    await this.ensureConnection();
     await this.client.del(`tag:${tag}`);
   }
 }

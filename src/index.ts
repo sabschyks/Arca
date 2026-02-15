@@ -16,6 +16,7 @@ import { createPinoLogger } from "./observability/pino-logger";
 import { RedisAdapter } from "./adapters/redis";
 import { LocalLruAdapter } from "./adapters/local-lru";
 import { TieredStorageAdapter } from "./core/tiered-cache";
+import { EncryptedStorageAdapter } from "./core/encrypted-storage";
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
@@ -73,6 +74,13 @@ export class Arca extends EventEmitter {
         );
       }
       this.storage = mainStorage;
+    }
+
+    // Aplica-se DEPOIS de decidir se é Híbrido ou Simples.
+    // Assim, se for híbrido, encriptamos antes de enviar para o L1/L2.
+    if (options.encryption?.enabled && options.encryption.secret) {
+      this.logger.debug("Enabling AES-256-GCM Encryption Layer");
+      this.storage = new EncryptedStorageAdapter(this.storage, options.encryption.secret);
     }
 
     // Circuit Breaker

@@ -52,6 +52,10 @@ export interface ArcaOptions {
     enabled: boolean;
     maxSize?: number; // Ex: 5000 itens
   };
+  encryption?: {
+    enabled: boolean;
+    secret: string;
+  };
 }
 
 export interface FetchOptions {
