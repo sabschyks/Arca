@@ -1,43 +1,49 @@
 name: CI
 
 on:
-    push:
-        branches: ["main", "develop"]
-    pull_request:
-        branches: ["main", "develop"]
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    quality:
-        name: Quality & Integrity
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                node-version: [20.x]
-        
-        steps:
-            - uses: actions/checkout@v4
+    strategy:
+      matrix:
+        node-version: [20.x]
 
-            - name: Install pnpm
-              uses: pnpm/action-setup@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                node-version: ${{ matrix.node-version }}
-                cache: 'pnpm'
-        
-            - name: Install Dependencies
-              run: pnpm install --frozen-lockfile
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-            - name: Lint (Biome)
-              run: pnpm lint:fix
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
-            - name: Type Check (TSC)
-              run: pnpm typecheck
-            
-            - name: Build (Tsup)
-              run: pnpm build
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-            - name: Test (Vitest)
-              run: pnpm test:coverage
+      - name: Lint
+        run: pnpm lint:fix
+
+      - name: Type Check
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test:coverage
