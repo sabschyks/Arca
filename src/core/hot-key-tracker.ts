@@ -8,6 +8,8 @@ export class HotKeyTracker {
    * Se não existe e o mapa está cheio, ignora (favorece chaves já conhecidas).
    */
   public record(key: string): void {
+    if (Math.random() > 0.1) return; // 90% de chance de ignorar (Custo quase zero)
+
     const count = this.stats.get(key);
 
     if (count !== undefined) {
