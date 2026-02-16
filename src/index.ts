@@ -16,6 +16,8 @@ import { createPinoLogger } from "./observability/pino-logger";
 import { RedisAdapter } from "./adapters/redis";
 import { LocalLruAdapter } from "./adapters/local-lru";
 import { TieredStorageAdapter } from "./core/tiered-cache";
+import { EncryptedStorageAdapter } from "./core/encrypted-storage";
+import { HotKeyTracker } from "./core/hot-key-tracker";
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
@@ -29,7 +31,10 @@ export * from "./types";
 
 export declare interface IArca {
   on<U extends keyof ArcaEvents>(event: U, listener: ArcaEvents[U]): this;
-  emit<U extends keyof ArcaEvents>(event: U, ...args: Parameters<ArcaEvents[U]>): boolean;
+  emit<U extends keyof ArcaEvents>(
+    event: U,
+    ...args: Parameters<ArcaEvents[U]>
+  ): boolean;
 }
 
 export class Arca extends EventEmitter {
@@ -39,7 +44,8 @@ export class Arca extends EventEmitter {
   private storage: StorageAdapter;
   private coalescer: Coalescer;
   private defaultTtl: number;
-  private options: ArcaOptions; // Guardamos options para acessar o lock
+  private options: ArcaOptions;
+  private tracker?: HotKeyTracker;
 
   constructor(options: ArcaOptions = {}) {
     super();
@@ -75,6 +81,21 @@ export class Arca extends EventEmitter {
       this.storage = mainStorage;
     }
 
+    // Aplica-se DEPOIS de decidir se é Híbrido ou Simples.
+    // Assim, se for híbrido, encriptamos antes de enviar para o L1/L2.
+    if (options.encryption?.enabled && options.encryption.secret) {
+      this.logger.debug("Enabling AES-256-GCM Encryption Layer");
+      this.storage = new EncryptedStorageAdapter(
+        this.storage,
+        options.encryption.secret,
+      );
+    }
+
+    if (options.warmup?.enabled) {
+      this.tracker = new HotKeyTracker();
+      this.runWarmup().catch(() => {});
+    }
+
     // Circuit Breaker
     if (options.circuitBreaker) {
       this.cb = new CircuitBreaker({
@@ -89,6 +110,7 @@ export class Arca extends EventEmitter {
     fetcher: () => Promise<T>,
     options: FetchOptions = {},
   ): Promise<T> {
+    this.tracker?.record(key);
     const ttl = options.ttl || this.defaultTtl;
 
     if (this.cb?.isOpen()) {
@@ -169,18 +191,41 @@ export class Arca extends EventEmitter {
   public async dispose(): Promise<void> {
     this.logger.info("Shutting down Arca...");
 
-    // 1. Se for Tiered, disconecta o subscriber
+    // 1. Salva o Snapshot de Warmup antes de morrer
+    if (this.tracker && this.options.warmup?.enabled) {
+      const topKeys = this.tracker.getTopKeys(
+        this.options.warmup.limit || 1000,
+      );
+      if (topKeys.length > 0) {
+        this.logger.debug(
+          `Saving ${topKeys.length} hot keys for next startup...`,
+        );
+        
+        // Salvamos um JSON simples no storage persistente (L2)
+        // Usamos TTL de 24h para o snapshot (se nínguem subir em 24h, o warmup expira)
+        await this.storage.set(
+          this.options.warmup.sourceKey || "arca:warmup_snapshot",
+          topKeys,
+          86400000,
+        );
+      }
+    }
+
+    // 2. Se for Tiered, disconecta o subscriber
     if (this.storage instanceof TieredStorageAdapter) {
       await this.storage.disconnect();
     }
 
-    // 2. Se o storage for Redis, fecha a conexão principal
+    // 3. Se o storage for Redis, fecha a conexão principal
     if (this.storage instanceof RedisAdapter) {
       await this.storage.disconnect();
     }
 
-    // 2. Se o lock for Redis e for diferente do storage, fecha também
-    if (this.options.lock instanceof RedisAdapter && this.options.lock !== this.storage) {
+    // 4. Se o lock for Redis e for diferente do storage, fecha também
+    if (
+      this.options.lock instanceof RedisAdapter &&
+      this.options.lock !== this.storage
+    ) {
       await this.options.lock.disconnect();
     }
 
@@ -205,7 +250,9 @@ export class Arca extends EventEmitter {
 
         if (count > 0) {
           // 2. Limpa o set da tag
-          await Promise.all(keys.map((key: string) => this.storage.delete(key)));
+          await Promise.all(
+            keys.map((key: string) => this.storage.delete(key)),
+          );
           totalKeysDeleted += count;
           summary[tag] = { keysDeleted: count };
         }
@@ -243,7 +290,8 @@ export class Arca extends EventEmitter {
       // NOTA: Se usarmos TieredStorage, ele não é um LockAdapter direto,
       // então dependemos de 'options.lock' ser passado explicitamente.
       const lockAdapter =
-        this.options.lock || (this.isLockAdapter(this.storage) ? this.storage : null);
+        this.options.lock ||
+        (this.isLockAdapter(this.storage) ? this.storage : null);
 
       if (lockAdapter) {
         // Tenta lockar por 5s (tempo seguro para o fetcher rodar)
@@ -260,7 +308,9 @@ export class Arca extends EventEmitter {
             // (Melhor duplicar trabalho do que falhar a request)
             this.emit(
               "error",
-              new Error(`Lock wait timeout for ${key}, falling back to local fetch`),
+              new Error(
+                `Lock wait timeout for ${key}, falling back to local fetch`,
+              ),
             );
           }
         }
@@ -278,8 +328,14 @@ export class Arca extends EventEmitter {
           // 1. Salva o valor no cache
           await this.storage.set(key, value, ttl);
 
-          if (tags && tags.length > 0 && typeof (this.storage as any).addKeysToTag === "function") {
-            await Promise.all(tags.map((tag) => (this.storage as any).addKeysToTag(tag, [key])));
+          if (
+            tags &&
+            tags.length > 0 &&
+            typeof (this.storage as any).addKeysToTag === "function"
+          ) {
+            await Promise.all(
+              tags.map((tag) => (this.storage as any).addKeysToTag(tag, [key])),
+            );
           }
 
           this.cb?.recordSuccess();
@@ -307,6 +363,47 @@ export class Arca extends EventEmitter {
     });
   }
 
+  /**
+   * Método privado para rodar o aquecimento
+   */
+  private async runWarmup(): Promise<void> {
+    const snapshotKey =
+      this.options.warmup?.sourceKey || "arca:warmup_snapshot";
+
+    this.logger.debug("Starting Predictive Warmup...");
+
+    // Tenta ler o snapshot do storage
+    const entry = await this.storage.get<string[]>(snapshotKey);
+
+    if (entry && Array.isArray(entry.value)) {
+      const keys = entry.value;
+      this.logger.info(`Found ${keys.length} hot keys do warmup.`);
+
+      let successCount = 0;
+
+      // Dispara fetches em paralelo (com limite de concorrência seria ideal, mas Promise.all serve por enquanto)
+      // Usamos .map para disparar as buscas.
+      // Segredo: Ao chamar 'this.storage.get(key)', se for TieredStorage,
+      // ele vai buscar no Redis (L2) e, se achar, vai popular o L1 automaticamente!
+      const promises = keys.map(async (key) => {
+        try {
+          const result = await this.storage.get(key);
+          if (result) successCount++;
+        } catch (_e) {
+          /* ignora falhas individuais */
+        }
+      });
+
+      await Promise.all(promises);
+
+      this.logger.info(
+        `Warmup complete. ${successCount}/${keys.length} keys loaded into L1.`,
+      );
+    } else {
+      this.logger.debug("No warmup snapshot found.");
+    }
+  }
+
   private async backgroundUpdate<T>(
     key: string,
     fetcher: () => Promise<T>,
@@ -322,8 +419,12 @@ export class Arca extends EventEmitter {
   /**
    * Type Guard para verificar se o Storage suporta Lock
    */
-  private isLockAdapter(adapter: StorageAdapter): adapter is StorageAdapter & LockAdapter {
-    return "acquire" in adapter && typeof (adapter as any).acquire === "function";
+  private isLockAdapter(
+    adapter: StorageAdapter,
+  ): adapter is StorageAdapter & LockAdapter {
+    return (
+      "acquire" in adapter && typeof (adapter as any).acquire === "function"
+    );
   }
 
   /**

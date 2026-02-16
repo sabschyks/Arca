@@ -52,6 +52,15 @@ export interface ArcaOptions {
     enabled: boolean;
     maxSize?: number; // Ex: 5000 itens
   };
+  encryption?: {
+    enabled: boolean;
+    secret: string;
+  };
+  warmup?: {
+    enabled: boolean;
+    limit?: number; // Quantas chaves salvar (ex: 100)
+    sourceKey?: string; // Nome da chave no Redis onde salvar o snapshot (default: 'arca:warmup_snapshot')
+  };
 }
 
 export interface FetchOptions {
