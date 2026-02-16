@@ -1,5 +1,5 @@
 import crypto, { type CipherGCM, type DecipherGCM } from "node:crypto";
-import type { CacheEntry, StorageAdapter } from "../types";
+import type { StorageAdapter, CacheEntry } from "../types";
 
 export class EncryptedStorageAdapter implements StorageAdapter {
   private wrapped: StorageAdapter;
@@ -15,10 +15,7 @@ export class EncryptedStorageAdapter implements StorageAdapter {
   async get<T>(key: string): Promise<CacheEntry<T> | null> {
     // 1. Busca o dado encriptado no storage real
     const encryptedEntry = await this.wrapped.get<any>(key);
-
-    if (!encryptedEntry) {
-      return null;
-    }
+    if (!encryptedEntry) return null;
 
     try {
       // O valor salvo seve ser um objeto com { iv, content, tag }
@@ -56,61 +53,47 @@ export class EncryptedStorageAdapter implements StorageAdapter {
   }
 
   async set<T>(key: string, value: T, ttl: number): Promise<void> {
-    // 1. Encriptação
-    const iv = crypto.randomBytes(16); // Vetor de Inicialização único por escrita
-    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv) as CipherGCM;
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(
+      this.algorithm,
+      this.key,
+      iv,
+    ) as CipherGCM;
+    const encrypted =
+      cipher.update(JSON.stringify(value), "utf8", "hex") + cipher.final("hex");
+    const tag = cipher.getAuthTag().toString("hex");
 
-    // Serializamos o valor para string antes de encriptar
-    const stringValue = JSON.stringify(value);
-
-    let encrypted = cipher.update(stringValue, "utf8", "hex");
-    encrypted += cipher.final("hex");
-
-    const authTag = cipher.getAuthTag().toString("hex");
-
-    // 2. Cria o payload seguro
-    const payload = {
-      iv: iv.toString("hex"),
-      content: encrypted,
-      tag: authTag,
-    };
-
-    // 3. Salva no storage real
-    // Nota: O 'value' salvo no Redis será nosso payload criptografado
-    await this.wrapped.set(key, payload, ttl);
+    await this.wrapped.set(
+      key,
+      { iv: iv.toString("hex"), content: encrypted, tag },
+      ttl,
+    );
   }
 
   async delete(key: string): Promise<void> {
     await this.wrapped.delete(key);
   }
-
-  // Se o adapter encapsulado tiver suporte a tags, repassamos as chamadas
-  async addKeysToTag(tag: string, key: string[]): Promise<void> {
-    if (typeof (this.wrapped as any).addKeysToTag === "function") {
-      await (this.wrapped as any).addKeysToTag(tag, key);
-    }
-  }
-
-  async getKeysByTag(tag: string): Promise<string[]> {
-    if (typeof (this.wrapped as any).getKeysByTag === "function") {
-      return (this.wrapped as any).getKeysByTag(tag);
-    }
-    return [];
-  }
-
-  async deleteTag(tag: string): Promise<void> {
-    if (typeof (this.wrapped as any).deleteTag === "function") {
-      await (this.wrapped as any).deleteTag(tag);
-    }
-  }
-
-  async disconnect(): Promise<void> {
-    if (typeof (this.wrapped as any).disconnect === "function") {
-      await (this.wrapped as any).disconnect();
-    }
-  }
-
   async clear(): Promise<void> {
-    await this.wrapped.clear();
+    if (typeof (this.wrapped as any).clear === "function")
+      await (this.wrapped as any).clear();
+  }
+
+  // Proxies
+  async addKeysToTag(tag: string, keys: string[]) {
+    if (typeof (this.wrapped as any).addKeysToTag === "function")
+      await (this.wrapped as any).addKeysToTag(tag, keys);
+  }
+  async getKeysByTag(tag: string) {
+    return typeof (this.wrapped as any).getKeysByTag === "function"
+      ? (this.wrapped as any).getKeysByTag(tag)
+      : [];
+  }
+  async deleteTag(tag: string) {
+    if (typeof (this.wrapped as any).deleteTag === "function")
+      await (this.wrapped as any).deleteTag(tag);
+  }
+  async disconnect() {
+    if (typeof (this.wrapped as any).disconnect === "function")
+      await (this.wrapped as any).disconnect();
   }
 }
