@@ -5,6 +5,7 @@
   "dependencyDashboard": true,
   "assignees": ["sabschyks"],
   "automerge": true,
+  "packageManager": "pnpm",
   "automergeType": "branch",
   "automergeStrategy": "merge",
   "automergeComment": "Dependência(s) atualizada automaticamente",
