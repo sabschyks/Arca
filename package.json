@@ -1,6 +1,6 @@
 {
   "name": "@sabschyks/arca",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "High-concurrency cache coalescing and state management library.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
