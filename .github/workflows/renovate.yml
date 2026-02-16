@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: "0 * * * *"
   workflow_dispatch:
+<<<<<<< HEAD
   issues:
     types: [edited] # Acorda o bot quando você interage com o Dashboard
 
@@ -30,3 +31,18 @@ jobs:
           RENOVATE_REPOSITORIES: 'sabschyks/Arca'
           RENOVATE_PLATFORM: 'github'
           RENOVATE_GIT_AUTHOR: 'Arca Bot <262118762+arca-dependency-manager[bot]@users.noreply.github.com>'
+=======
+
+concurrency:
+  group: renovate
+  cancel-in-progress: true
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: renovatebot/github-action@v40.1.11
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+>>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))

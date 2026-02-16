@@ -3,17 +3,32 @@ name: Security
 on:
   push:
     branches: [main, develop]
+<<<<<<< HEAD
   schedule:
     - cron: '0 1 * * 0' 
 jobs:
   scan:
     name: Security Scan
+=======
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 * * * *'
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+>>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
 
     steps:
+<<<<<<< HEAD
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -31,8 +46,43 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
       - name: Snyk Scan
+=======
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+
+      - uses: github/codeql-action/analyze@v4
+
+      - name: Run Snyk Test
+>>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high --all-projects
+<<<<<<< HEAD
+=======
+
+      - name: Snyk Monitor
+        if: github.ref == 'refs/heads/main'
+        run: npx snyk monitor --all-projects
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+>>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
