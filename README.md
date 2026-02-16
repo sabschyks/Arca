@@ -2,8 +2,6 @@
 
 ![Arca Banner](https://placehold.co/1200x300/1a1a1a/ffffff?text=ARCA&font=montserrat)
 
-# ARCA
-
 **The High-Performance Availability Engine for Node.js**
 
 Hybrid Tiered Caching (L1/L2) • Thundering Herd Protection • AES-256 Encryption • Predictive Warmup
