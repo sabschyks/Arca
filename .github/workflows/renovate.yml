@@ -20,4 +20,4 @@ jobs:
       - uses: renovatebot/github-action@v40.1.11
 >>>>>>> daf6064 (merge (1.7.0 release) (#21))
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RENOVATE_TOKEN }}
