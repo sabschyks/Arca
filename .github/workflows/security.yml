@@ -6,11 +6,12 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    - cron: '0 * * * *' # a cada hora
+    - cron: '0 * * * *'
 
 concurrency:
   group: security-${{ github.ref }}
   cancel-in-progress: true
+
 
 jobs:
   security:
@@ -20,18 +21,22 @@ jobs:
       security-events: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
-      - uses: pnpm/action-setup@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
         with:
           version: 9
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - uses: github/codeql-action/init@v4
         with:
@@ -39,7 +44,7 @@ jobs:
 
       - uses: github/codeql-action/analyze@v4
 
-      - name: Snyk Test
+      - name: Run Snyk Test
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

@@ -7,7 +7,7 @@
   "automerge": true,
   "automergeType": "branch",
   "automergeStrategy": "merge",
-  "automergeComment": "Dependência atualizada automaticamente",
+  "automergeComment": "Dependência(s) atualizada automaticamente",
   "packageRules": [
     {
       "matchUpdateTypes": ["patch", "minor"],
