@@ -3,7 +3,7 @@
     "main",
     {
       "name": "develop",
-      "prerelease": "beta"
+      "prerelease": "dev"
     }
   ],
   "plugins": [
@@ -28,7 +28,7 @@
     [
       "@semantic-release/npm",
       {
-        "npmPublish": true
+        "npmPublish": false
       }
     ],
     "@semantic-release/github",
