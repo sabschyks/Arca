@@ -61,6 +61,12 @@ export interface ArcaOptions {
     limit?: number; // Quantas chaves salvar (ex: 100)
     sourceKey?: string; // Nome da chave no Redis onde salvar o snapshot (default: 'arca:warmup_snapshot')
   };
+
+  /**
+   * TTL Jitter: Adiciona uma variação aleatória ao TTL para evitar expirações simultâneas.
+   * Ex: 0.1 adiociona +/- 10% de variação ao TTL base.
+   */
+  jitter?: number;
 }
 
 export interface FetchOptions {

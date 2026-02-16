@@ -1,0 +1,40 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "timezone": "America/Sao_Paulo",
+  "dependencyDashboard": true,
+  "assignees": ["sabschyks"],
+  "automerge": true,
+  "automergeType": "branch",
+  "automergeStrategy": "merge",
+  "automergeComment": "Dependência(s) atualizada automaticamente",
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "groupName": "Dependências menores",
+      "schedule": ["every hour"]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "groupName": "Dependências maiores",
+      "schedule": ["every monday"]
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "groupName": "Dev Dependencies",
+      "schedule": ["every hour"]
+    }
+  ],
+  "vulnerabilityAlerts": true,
+  "rangeStrategy": "bump",
+  "separateMajorMinor": true,
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "semanticCommits": "enabled",
+  "commitMessageAction": "chore",
+  "commitMessageTopic": "{{depName}}",
+  "stabilityDays": 3
+}

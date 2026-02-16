@@ -1,5 +1,5 @@
 import crypto, { type CipherGCM, type DecipherGCM } from "node:crypto";
-import type { StorageAdapter, CacheEntry } from "../types";
+import type { CacheEntry, StorageAdapter } from "../types";
 
 export class EncryptedStorageAdapter implements StorageAdapter {
   private wrapped: StorageAdapter;
@@ -54,28 +54,18 @@ export class EncryptedStorageAdapter implements StorageAdapter {
 
   async set<T>(key: string, value: T, ttl: number): Promise<void> {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(
-      this.algorithm,
-      this.key,
-      iv,
-    ) as CipherGCM;
-    const encrypted =
-      cipher.update(JSON.stringify(value), "utf8", "hex") + cipher.final("hex");
+    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv) as CipherGCM;
+    const encrypted = cipher.update(JSON.stringify(value), "utf8", "hex") + cipher.final("hex");
     const tag = cipher.getAuthTag().toString("hex");
 
-    await this.wrapped.set(
-      key,
-      { iv: iv.toString("hex"), content: encrypted, tag },
-      ttl,
-    );
+    await this.wrapped.set(key, { iv: iv.toString("hex"), content: encrypted, tag }, ttl);
   }
 
   async delete(key: string): Promise<void> {
     await this.wrapped.delete(key);
   }
   async clear(): Promise<void> {
-    if (typeof (this.wrapped as any).clear === "function")
-      await (this.wrapped as any).clear();
+    if (typeof (this.wrapped as any).clear === "function") await (this.wrapped as any).clear();
   }
 
   // Proxies
