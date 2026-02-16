@@ -1,0 +1,32 @@
+name: Snyk Security Scan
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
+
+jobs:
+    security:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: 20
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v3
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Run Snyk to check vulnerabilities
+              uses: snyk/actions/node@master
+              env:
+                SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+              with:
+                args: --severity-threshold=high
+
