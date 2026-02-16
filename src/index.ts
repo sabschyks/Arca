@@ -91,20 +91,16 @@ export class Arca extends EventEmitter {
       );
     }
 
+    if (options.warmup?.enabled) {
+      this.tracker = new HotKeyTracker();
+      this.runWarmup().catch(() => {});
+    }
+
     // Circuit Breaker
     if (options.circuitBreaker) {
       this.cb = new CircuitBreaker({
         threshold: options.circuitBreaker.failureThreshold,
         resetTimeout: options.circuitBreaker.resetTimeout,
-      });
-    }
-    
-    if (options.warmup?.enabled) {
-      this.tracker = new HotKeyTracker();
-
-      // Inicia o aquecimento em background (não bloqueia o boot)
-      this.runWarmup().catch((err: { message: any; }) => {
-        this.logger.warn("Warmup failed", { error: err.message });
       });
     }
   }
@@ -114,7 +110,7 @@ export class Arca extends EventEmitter {
     fetcher: () => Promise<T>,
     options: FetchOptions = {},
   ): Promise<T> {
-    this.tracker?.record(key); 
+    this.tracker?.record(key);
     const ttl = options.ttl || this.defaultTtl;
 
     if (this.cb?.isOpen()) {
@@ -197,15 +193,21 @@ export class Arca extends EventEmitter {
 
     // 1. Salva o Snapshot de Warmup antes de morrer
     if (this.tracker && this.options.warmup?.enabled) {
-      const limit = this.options.warmup?.limit || 1000;
-      const topKeys = this.tracker.getTopKeys(limit);
-      const snapshotKey = this.options.warmup.sourceKey || 'arca:warmup_snapshot';
-
+      const topKeys = this.tracker.getTopKeys(
+        this.options.warmup.limit || 1000,
+      );
       if (topKeys.length > 0) {
-        this.logger.debug(`Saving ${topKeys.length} hot keys for next startup...`);
-        //Salvamos um JSON simples no storage persistente (L2)
+        this.logger.debug(
+          `Saving ${topKeys.length} hot keys for next startup...`,
+        );
+        
+        // Salvamos um JSON simples no storage persistente (L2)
         // Usamos TTL de 24h para o snapshot (se nínguem subir em 24h, o warmup expira)
-        await this.storage.set(snapshotKey, topKeys, 1000 * 60 * 60 * 24);
+        await this.storage.set(
+          this.options.warmup.sourceKey || "arca:warmup_snapshot",
+          topKeys,
+          86400000,
+        );
       }
     }
 
@@ -365,7 +367,8 @@ export class Arca extends EventEmitter {
    * Método privado para rodar o aquecimento
    */
   private async runWarmup(): Promise<void> {
-    const snapshotKey = this.options.warmup?.sourceKey || 'arca:warmup_snapshot';
+    const snapshotKey =
+      this.options.warmup?.sourceKey || "arca:warmup_snapshot";
 
     this.logger.debug("Starting Predictive Warmup...");
 
@@ -386,14 +389,18 @@ export class Arca extends EventEmitter {
         try {
           const result = await this.storage.get(key);
           if (result) successCount++;
-        } catch (_e) { /* ignora falhas individuais */ }
+        } catch (_e) {
+          /* ignora falhas individuais */
+        }
       });
 
       await Promise.all(promises);
 
-      this.logger.info(`Warmup complete. ${successCount}/${keys.length} keys loaded into L1.`);
+      this.logger.info(
+        `Warmup complete. ${successCount}/${keys.length} keys loaded into L1.`,
+      );
     } else {
-      this.logger.debug ("No warmup snapshot found.");
+      this.logger.debug("No warmup snapshot found.");
     }
   }
 

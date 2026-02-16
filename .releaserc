@@ -1,5 +1,11 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main",
+    {
+      "name": "develop",
+      "prerelease": "beta"
+    }
+  ],
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
@@ -19,7 +25,12 @@
         "preset": "conventionalcommits"
       }
     ],
-    "@semantic-release/npm",
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": true
+      }
+    ],
     "@semantic-release/github",
     [
       "@semantic-release/git",

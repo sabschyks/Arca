@@ -8,80 +8,108 @@ import {
 } from "../src/index";
 
 /**
- * Configurado para testar: Latência por Camada, Coalescing e Invalidação.
- * Preparado para futuras implementações (Compression/Encryption).
+ * ARCA OFFICIAL BENCHMARK SUITE
+ * * Environment: Node.js (V8)
+ * * Tooling: Mitata (High-precision timing)
+ * * Scenarios:
+ * 1. Layer Latency: Comparing Raw DB vs Redis vs Arca L1 (RAM)
+ * 2. Concurrency: Simulating Thundering Herd (Stampede)
+ * 3. Bulk Ops: Tags and Invalidation performance
  */
-
 const setupBenchmark = async () => {
   const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
   const defaultTtl = 60000;
 
-  // 1. Adapters Setup
-  const redis = new RedisAdapter(redisUrl);
-  const l1 = new LocalLruAdapter({ max: 5000 });
-  const memory = new MemoryAdapter();
+  // --- SETUP ADAPTERS ---
+  const redisAdapter = new RedisAdapter(redisUrl);
+  const l1Adapter = new LocalLruAdapter({ max: 5000 });
+  const memoryAdapter = new MemoryAdapter();
 
-  // 2. Arca Instances (Automated Scenarios)
+  // --- SETUP ENGINES ---
+  // Simula um banco de dados com 10ms de latência
+  const mockDb = async () => {
+    await new Promise((r) => setTimeout(r, 10));
+    return { id: 1, name: "John Doe", role: "admin" };
+  };
+
   const engines = {
-    database: async () => {
-      await new Promise((r) => setTimeout(r, 10));
-      return { data: "ok" };
-    }, // Simulação DB
-    memory: new Arca({ storage: memory, defaultTtl }),
-    redis: new Arca({ storage: redis, defaultTtl: defaultTtl }),
-    hybrid: new Arca({
-      storage: new TieredStorageAdapter(l1, redis),
-      l1Cache: { enabled: true, maxSize: 5000 },
+    // 1. Apenas Memória (Base de comparação)
+    memory: new Arca({ 
+      storage: memoryAdapter, 
+      defaultTtl 
     }),
-    defaultTtl: defaultTtl,
+
+    // 2. Apenas Redis (L2)
+    redis: new Arca({ 
+      storage: redisAdapter, 
+      defaultTtl 
+    }),
+
+    // 3. Híbrido (L1 RAM + L2 Redis + Sync)
+    hybrid: new Arca({
+      // Injetamos manualmente o TieredStorage para o teste
+      storage: new TieredStorageAdapter(l1Adapter, redisAdapter),
+      defaultTtl,
+    }),
   };
 
   const KEY = "bench:universal:key";
   const TAG = "bench:tag";
 
-  // Warm-up
-  await engines.redis.get(KEY, engines.database);
-  await engines.hybrid.get(KEY, engines.database);
+  // --- WARM-UP (Aquecimento) ---
+  console.log("Warming up caches...");
+  await engines.redis.get(KEY, mockDb);
+  await engines.hybrid.get(KEY, mockDb);
 
-  console.log("Arca Benchmark Starting...\n");
+  console.log("Starting Benchmark...\n");
 
-  // --- GRUPO 1: LATÊNCIA BRUTA POR CAMADA ---
-  group("Layer Latency (Cold vs Warm)", () => {
-    bench("Direct Database (10ms delay)", async () => await engines.database());
+  // --- CENÁRIO 1: LATÊNCIA DE LEITURA (READ LATENCY) ---
+  // Compara o custo de ir ao DB vs Redis vs Memória Local
+  group("1. Layer Latency (Read Operations)", () => {
+    
+    bench("Raw Database (Simulated 10ms)", async () => {
+      await mockDb();
+    });
 
-    bench("Arca L2 (Redis)", async () => {
-      await engines.redis.get(KEY, engines.database);
+    bench("Arca L2 (Redis Adapter)", async () => {
+      await engines.redis.get(KEY, mockDb);
     });
 
     bench("Arca L1 (Hybrid RAM)", async () => {
-      await engines.hybrid.get(KEY, engines.database);
+      await engines.hybrid.get(KEY, mockDb);
     });
   });
 
-  // --- GRUPO 2: PROTEÇÃO DE CONCORRÊNCIA (THUNDERING HERD) ---
-  group(`Concurrency: 100 simultaneous requests`, () => {
+  // --- CENÁRIO 2: PROTEÇÃO CONTRA STAMPEDE (CONCURRENCY) ---
+  // Simula 100 requests batendo ao mesmo tempo numa chave expirada/nova
+  group("2. Thundering Herd Protection (100 concurrent reqs)", () => {
     const CONCURRENCY = 100;
+    const STAMPEDE_KEY = "bench:stampede:key";
 
-    bench("Without Coalescing (Simulated)", async () => {
-      await Promise.all(Array.from({ length: CONCURRENCY }).map(() => engines.database()));
+    bench("Without Arca (Direct DB Hits)", async () => {
+      // Isso executaria o mockDb 100 vezes reais
+      await Promise.all(
+        Array.from({ length: CONCURRENCY }).map(() => mockDb())
+      );
     });
 
     bench("With Arca Coalescing", async () => {
+      // Isso deve executar o mockDb APENAS 1 vez
       await Promise.all(
         Array.from({ length: CONCURRENCY }).map(() =>
-          engines.hybrid.get("shared-key", engines.database, { forceRefresh: true }),
-        ),
+          engines.hybrid.get(STAMPEDE_KEY, mockDb, { forceRefresh: true })
+        )
       );
     });
   });
 
-  // --- GRUPO 3: TAGS & INVALIDAÇÃO ---
-  group("Bulk Operations", () => {
-    bench("Tag Association & Fetch", async () => {
-      await engines.hybrid.get(KEY, engines.database, { tags: [TAG] });
+  // --- CENÁRIO 3: OPERAÇÕES EM MASSA (TAGS) ---
+  group("3. Tags & Surgical Invalidation", () => {
+    bench("Tag Association overhead", async () => {
+      await engines.hybrid.get("bench:tag:key", mockDb, { tags: [TAG] });
     });
 
-    bench("Surgical Invalidation (1 Tag)", async () => {
+    bench("Invalidate Tag (Cluster Broadcast)", async () => {
       await engines.hybrid.invalidateTags([TAG]);
     });
   });
@@ -91,6 +119,7 @@ const setupBenchmark = async () => {
   // Cleanup
   await engines.hybrid.dispose();
   await engines.redis.dispose();
+  process.exit(0);
 };
 
 setupBenchmark().catch(console.error);
