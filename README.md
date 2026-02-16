@@ -1,5 +1,3 @@
-# 📦 README.md (Final)
-
 <div align="center">
 
 ![Arca Banner](https://placehold.co/1200x300/1a1a1a/ffffff?text=ARCA&font=montserrat)
