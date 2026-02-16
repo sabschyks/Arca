@@ -21,3 +21,4 @@ jobs:
 >>>>>>> daf6064 (merge (1.7.0 release) (#21))
         with:
           token: ${{ secrets.RENOVATE_TOKEN }}
+          autodiscover: true
