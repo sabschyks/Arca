@@ -34,15 +34,15 @@ const setupBenchmark = async () => {
 
   const engines = {
     // 1. Apenas Memória (Base de comparação)
-    memory: new Arca({
-      storage: memoryAdapter,
-      defaultTtl,
+    memory: new Arca({ 
+      storage: memoryAdapter, 
+      defaultTtl 
     }),
 
     // 2. Apenas Redis (L2)
-    redis: new Arca({
-      storage: redisAdapter,
-      defaultTtl,
+    redis: new Arca({ 
+      storage: redisAdapter, 
+      defaultTtl 
     }),
 
     // 3. Híbrido (L1 RAM + L2 Redis + Sync)
@@ -66,6 +66,7 @@ const setupBenchmark = async () => {
   // --- CENÁRIO 1: LATÊNCIA DE LEITURA (READ LATENCY) ---
   // Compara o custo de ir ao DB vs Redis vs Memória Local
   group("1. Layer Latency (Read Operations)", () => {
+    
     bench("Raw Database (Simulated 10ms)", async () => {
       await mockDb();
     });
@@ -87,15 +88,17 @@ const setupBenchmark = async () => {
 
     bench("Without Arca (Direct DB Hits)", async () => {
       // Isso executaria o mockDb 100 vezes reais
-      await Promise.all(Array.from({ length: CONCURRENCY }).map(() => mockDb()));
+      await Promise.all(
+        Array.from({ length: CONCURRENCY }).map(() => mockDb())
+      );
     });
 
     bench("With Arca Coalescing", async () => {
       // Isso deve executar o mockDb APENAS 1 vez
       await Promise.all(
         Array.from({ length: CONCURRENCY }).map(() =>
-          engines.hybrid.get(STAMPEDE_KEY, mockDb, { forceRefresh: true }),
-        ),
+          engines.hybrid.get(STAMPEDE_KEY, mockDb, { forceRefresh: true })
+        )
       );
     });
   });

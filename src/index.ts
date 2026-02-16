@@ -31,7 +31,10 @@ export * from "./types";
 
 export declare interface IArca {
   on<U extends keyof ArcaEvents>(event: U, listener: ArcaEvents[U]): this;
-  emit<U extends keyof ArcaEvents>(event: U, ...args: Parameters<ArcaEvents[U]>): boolean;
+  emit<U extends keyof ArcaEvents>(
+    event: U,
+    ...args: Parameters<ArcaEvents[U]>
+  ): boolean;
 }
 
 export class Arca extends EventEmitter {
@@ -82,7 +85,10 @@ export class Arca extends EventEmitter {
     // Assim, se for híbrido, encriptamos antes de enviar para o L1/L2.
     if (options.encryption?.enabled && options.encryption.secret) {
       this.logger.debug("Enabling AES-256-GCM Encryption Layer");
-      this.storage = new EncryptedStorageAdapter(this.storage, options.encryption.secret);
+      this.storage = new EncryptedStorageAdapter(
+        this.storage,
+        options.encryption.secret,
+      );
     }
 
     if (options.warmup?.enabled) {
@@ -187,10 +193,14 @@ export class Arca extends EventEmitter {
 
     // 1. Salva o Snapshot de Warmup antes de morrer
     if (this.tracker && this.options.warmup?.enabled) {
-      const topKeys = this.tracker.getTopKeys(this.options.warmup.limit || 1000);
+      const topKeys = this.tracker.getTopKeys(
+        this.options.warmup.limit || 1000,
+      );
       if (topKeys.length > 0) {
-        this.logger.debug(`Saving ${topKeys.length} hot keys for next startup...`);
-
+        this.logger.debug(
+          `Saving ${topKeys.length} hot keys for next startup...`,
+        );
+        
         // Salvamos um JSON simples no storage persistente (L2)
         // Usamos TTL de 24h para o snapshot (se nínguem subir em 24h, o warmup expira)
         await this.storage.set(
@@ -212,7 +222,10 @@ export class Arca extends EventEmitter {
     }
 
     // 4. Se o lock for Redis e for diferente do storage, fecha também
-    if (this.options.lock instanceof RedisAdapter && this.options.lock !== this.storage) {
+    if (
+      this.options.lock instanceof RedisAdapter &&
+      this.options.lock !== this.storage
+    ) {
       await this.options.lock.disconnect();
     }
 
@@ -237,7 +250,9 @@ export class Arca extends EventEmitter {
 
         if (count > 0) {
           // 2. Limpa o set da tag
-          await Promise.all(keys.map((key: string) => this.storage.delete(key)));
+          await Promise.all(
+            keys.map((key: string) => this.storage.delete(key)),
+          );
           totalKeysDeleted += count;
           summary[tag] = { keysDeleted: count };
         }
@@ -275,7 +290,8 @@ export class Arca extends EventEmitter {
       // NOTA: Se usarmos TieredStorage, ele não é um LockAdapter direto,
       // então dependemos de 'options.lock' ser passado explicitamente.
       const lockAdapter =
-        this.options.lock || (this.isLockAdapter(this.storage) ? this.storage : null);
+        this.options.lock ||
+        (this.isLockAdapter(this.storage) ? this.storage : null);
 
       if (lockAdapter) {
         // Tenta lockar por 5s (tempo seguro para o fetcher rodar)
@@ -292,7 +308,9 @@ export class Arca extends EventEmitter {
             // (Melhor duplicar trabalho do que falhar a request)
             this.emit(
               "error",
-              new Error(`Lock wait timeout for ${key}, falling back to local fetch`),
+              new Error(
+                `Lock wait timeout for ${key}, falling back to local fetch`,
+              ),
             );
           }
         }
@@ -311,8 +329,14 @@ export class Arca extends EventEmitter {
           // 1. Salva o valor no cache
           await this.storage.set(key, value, finalTtl);
 
-          if (tags && tags.length > 0 && typeof (this.storage as any).addKeysToTag === "function") {
-            await Promise.all(tags.map((tag) => (this.storage as any).addKeysToTag(tag, [key])));
+          if (
+            tags &&
+            tags.length > 0 &&
+            typeof (this.storage as any).addKeysToTag === "function"
+          ) {
+            await Promise.all(
+              tags.map((tag) => (this.storage as any).addKeysToTag(tag, [key])),
+            );
           }
 
           this.cb?.recordSuccess();
@@ -344,7 +368,8 @@ export class Arca extends EventEmitter {
    * Método privado para rodar o aquecimento
    */
   private async runWarmup(): Promise<void> {
-    const snapshotKey = this.options.warmup?.sourceKey || "arca:warmup_snapshot";
+    const snapshotKey =
+      this.options.warmup?.sourceKey || "arca:warmup_snapshot";
 
     this.logger.debug("Starting Predictive Warmup...");
 
@@ -372,7 +397,9 @@ export class Arca extends EventEmitter {
 
       await Promise.all(promises);
 
-      this.logger.info(`Warmup complete. ${successCount}/${keys.length} keys loaded into L1.`);
+      this.logger.info(
+        `Warmup complete. ${successCount}/${keys.length} keys loaded into L1.`,
+      );
     } else {
       this.logger.debug("No warmup snapshot found.");
     }
@@ -393,8 +420,12 @@ export class Arca extends EventEmitter {
   /**
    * Type Guard para verificar se o Storage suporta Lock
    */
-  private isLockAdapter(adapter: StorageAdapter): adapter is StorageAdapter & LockAdapter {
-    return "acquire" in adapter && typeof (adapter as any).acquire === "function";
+  private isLockAdapter(
+    adapter: StorageAdapter,
+  ): adapter is StorageAdapter & LockAdapter {
+    return (
+      "acquire" in adapter && typeof (adapter as any).acquire === "function"
+    );
   }
 
   /**
