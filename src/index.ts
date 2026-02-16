@@ -320,13 +320,14 @@ export class Arca extends EventEmitter {
       try {
         const value = await fetcher();
         const duration = (Date.now() - startTime) / 1000;
+        const finalTtl = this.calculateJitteredTtl(ttl);
 
         this.metrics?.observe("fetch_duration", duration, { key });
         this.logger.debug("Fetch completed succesfully", { key, duration });
 
         try {
           // 1. Salva o valor no cache
-          await this.storage.set(key, value, ttl);
+          await this.storage.set(key, value, finalTtl);
 
           if (
             tags &&
@@ -444,5 +445,19 @@ export class Arca extends EventEmitter {
       }
     }
     throw new Error("Distributed lock timeout: Data did not appear in cache");
+  }
+
+  private calculateJitteredTtl(ttl: number): number {
+    const jitterFactor = this.options.jitter || 0;
+    if (jitterFactor <= 0) return ttl;
+
+    // Calcula um fator entre -jitterFactor e +jitterFactor
+    // Ex: Se jitter é 0.1, o fator varia de -0.1 a 0.1
+    const min = 1 - jitterFactor;
+    const max = 1 + jitterFactor;
+
+    const randomFactor = Math.random() * (max - min) + min;
+
+    return Math.floor(ttl * randomFactor);
   }
 }
