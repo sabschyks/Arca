@@ -4,7 +4,6 @@
     "config:recommended",
     ":separateMajorReleases",
     ":combinePatchMinorReleases",
-    ":rebaseStalePrs",
     ":semanticCommits"
   ],
   "timezone": "America/Sao_Paulo",
@@ -17,8 +16,8 @@
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
-      "groupName": "Minor and Patch updates",
-      "schedule": ["every hour"]
+      "groupName": "Non-major updates",
+      "schedule": ["at any time"]
     },
     {
       "matchPackagePatterns": ["^@types/"],
@@ -30,12 +29,9 @@
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "groupName": "Major updates",
-      "schedule": ["every monday"]
+      "schedule": ["on monday"]
     }
   ],
-  "pnpm": {
-    "enabled": true
-  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
