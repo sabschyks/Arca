@@ -3,8 +3,7 @@
   "platformCommit": true,
   "dependencyDashboard": true,
   "prConcurrentLimit": 0,
-  "prThresholdLimit": 0,
-  "branchDecoration": "none",
+  "pruneStaleBranches": true,
   "extends": [
     "config:recommended",
     ":separateMajorReleases",
