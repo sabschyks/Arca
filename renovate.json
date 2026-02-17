@@ -1,6 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "schedule": ["every 30 mins"],
   "platformCommit": true,
   "platformAutomerge": true,
   "dependencyDashboard": true,
@@ -25,14 +24,12 @@
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
-      "groupName": "Non-major updates",
-      "schedule": ["at any time"]
+      "groupName": "Non-major updates"
     },
     {
       "matchPackagePatterns": ["^@types/"],
       "groupName": "TypeScript Definitions",
-      "automerge": true,
-      "schedule": ["at any time"]
+      "automerge": true
     },
     {
       "matchUpdateTypes": ["major"],
