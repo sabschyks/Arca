@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "platformCommit": "enabled",
+  "schedule": ["every 30 mins"],
+  "platformCommit": true,
+  "platformAutomerge": true,
   "dependencyDashboard": true,
   "prConcurrentLimit": 0,
   "pruneStaleBranches": true,
@@ -11,58 +13,42 @@
     ":semanticCommits"
   ],
   "timezone": "America/Sao_Paulo",
-  "labels": [
-    "dependencies"
-  ],
-  "assignees": [
-    "sabschyks"
-  ],
+  "labels": ["dependencies"],
+  "assignees": ["sabschyks"],
   "rangeStrategy": "bump",
   "vulnerabilityAlerts": {
     "enabled": true,
-    "addLabels": [
-      "security"
-    ]
+    "addLabels": ["security"]
   },
   "packageRules": [
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
       "groupName": "Non-major updates",
-      "schedule": [
-        "at any time"
-      ]
+      "schedule": ["at any time"]
     },
     {
+      "matchPackagePatterns": ["^@types/"],
       "groupName": "TypeScript Definitions",
       "automerge": true,
-      "schedule": [
-        "at any time"
-      ],
-      "matchPackageNames": [
-        "/^@types//"
-      ]
+      "schedule": ["at any time"]
     },
     {
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchUpdateTypes": ["major"],
       "automerge": false,
       "groupName": "Major updates",
-      "schedule": [
-        "on monday"
-      ]
+      "schedule": ["on monday"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": true
     }
   ],
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
-    "schedule": [
-      "before 5am on monday"
-    ]
+    "schedule": ["before 5am on monday"]
   }
 }
