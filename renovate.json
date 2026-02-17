@@ -2,6 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "platformCommit": "enabled",
   "dependencyDashboard": true,
+  "prConcurrentLimit": 0,
+  "prThresholdLimit": 0,
+  "branchDecoration": "none",
+  "cleanupBrokenVar": true,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
   "extends": [
     "config:recommended",
     ":separateMajorReleases",
