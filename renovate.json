@@ -1,41 +1,48 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": [
+    "config:recommended",
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases",
+    ":rebaseStalePrs",
+    ":semanticCommits"
+  ],
   "timezone": "America/Sao_Paulo",
   "dependencyDashboard": true,
+  "labels": ["dependencies"],
   "assignees": ["sabschyks"],
-  "automerge": true,
-  "packageManager": "pnpm",
-  "automergeType": "branch",
-  "automergeStrategy": "merge",
-  "automergeComment": "Dependência(s) atualizada automaticamente",
+  "rangeStrategy": "bump",
   "packageRules": [
     {
-      "matchUpdateTypes": ["patch", "minor"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
       "automerge": true,
-      "groupName": "Dependências menores",
+      "groupName": "Minor and Patch updates",
       "schedule": ["every hour"]
+    },
+    {
+      "matchPackagePatterns": ["^@types/"],
+      "automerge": true,
+      "groupName": "TypeScript Definitions",
+      "schedule": ["at any time"]
     },
     {
       "matchUpdateTypes": ["major"],
       "automerge": false,
-      "groupName": "Dependências maiores",
+      "groupName": "Major updates",
       "schedule": ["every monday"]
-    },
-    {
-      "matchDepTypes": ["devDependencies"],
-      "automerge": true,
-      "groupName": "Dev Dependencies",
-      "schedule": ["every hour"]
     }
   ],
-  "vulnerabilityAlerts": true,
-  "rangeStrategy": "bump",
-  "separateMajorMinor": true,
-  "prHourlyLimit": 5,
-  "prConcurrentLimit": 10,
-  "semanticCommits": "enabled",
-  "commitMessageAction": "chore",
-  "commitMessageTopic": "{{depName}}",
-  "stabilityDays": 3
+  "pnpm": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "addLabels": ["security"]
+  }
 }
