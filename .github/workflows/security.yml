@@ -26,20 +26,12 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-<<<<<<< HEAD
           version: 9.15.9
-=======
-          version: 9
->>>>>>> daf6064 (merge (1.7.0 release) (#21))
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-<<<<<<< HEAD
           node-version: 20.20.0
-=======
-          node-version: 20
->>>>>>> daf6064 (merge (1.7.0 release) (#21))
           cache: 'pnpm'
 
       - name: Install dependencies
