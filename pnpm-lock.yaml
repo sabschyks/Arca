@@ -505,6 +505,7 @@ packages:
     engines: {node: '>=12'}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@prisma/client-runtime-utils@7.4.0':
     resolution: {integrity: sha512-jTmWAOBGBSCT8n7SMbpjCpHjELgcDW9GNP/CeK6CeqjUFlEL6dn8Cl81t/NBDjJdXDm85XDJmc+PEQqqQee3xw==}
 =======
@@ -514,6 +515,10 @@ packages:
   '@prisma/client-runtime-utils@7.3.0':
     resolution: {integrity: sha512-dG/ceD9c+tnXATPk8G+USxxYM9E6UdMTnQeQ+1SZUDxTz7SgQcfxEqafqIQHcjdlcNK/pvmmLfSwAs3s2gYwUw==}
 >>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
+=======
+  '@prisma/client-runtime-utils@7.4.0':
+    resolution: {integrity: sha512-jTmWAOBGBSCT8n7SMbpjCpHjELgcDW9GNP/CeK6CeqjUFlEL6dn8Cl81t/NBDjJdXDm85XDJmc+PEQqqQee3xw==}
+>>>>>>> 03ec2fd (fix(deps): update non-major updates (#36))
 
   '@prisma/client@7.4.0':
     resolution: {integrity: sha512-Sc+ncr7+ph1hMf1LQfn6UyEXDEamCd5pXMsx8Q3SBH0NGX+zjqs3eaABt9hXwbcK9l7f8UyK8ldxOWA2LyPynQ==}
@@ -3242,6 +3247,7 @@ snapshots:
       config-chain: 1.1.13
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@prisma/client-runtime-utils@7.4.0': {}
 =======
   '@polka/url@1.0.0-next.29':
@@ -3250,6 +3256,10 @@ snapshots:
   '@prisma/client-runtime-utils@7.3.0': {}
 >>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
 
+=======
+  '@prisma/client-runtime-utils@7.4.0': {}
+
+>>>>>>> 03ec2fd (fix(deps): update non-major updates (#36))
   '@prisma/client@7.4.0(prisma@7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@prisma/client-runtime-utils': 7.4.0
