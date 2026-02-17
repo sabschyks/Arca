@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "platformCommit": true,
+  "platformCommit": "enabled",
   "dependencyDashboard": true,
   "extends": [
     "config:recommended",
@@ -9,37 +9,58 @@
     ":semanticCommits"
   ],
   "timezone": "America/Sao_Paulo",
-  "labels": ["dependencies"],
-  "assignees": ["sabschyks"],
+  "labels": [
+    "dependencies"
+  ],
+  "assignees": [
+    "sabschyks"
+  ],
   "rangeStrategy": "bump",
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
       "groupName": "Non-major updates",
-      "schedule": ["at any time"]
+      "schedule": [
+        "at any time"
+      ]
     },
     {
-      "matchPackagePatterns": ["^@types/"],
       "automerge": true,
       "groupName": "TypeScript Definitions",
-      "schedule": ["at any time"]
+      "schedule": [
+        "at any time"
+      ],
+      "matchPackageNames": [
+        "/^@types//"
+      ]
     },
     {
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
       "groupName": "Major updates",
-      "schedule": ["on monday"]
+      "schedule": [
+        "on monday"
+      ]
     }
   ],
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
-    "schedule": ["before 5am on monday"]
+    "schedule": [
+      "before 5am on monday"
+    ]
   },
   "vulnerabilityAlerts": {
     "enabled": true,
-    "addLabels": ["security"]
+    "addLabels": [
+      "security"
+    ]
   }
 }
