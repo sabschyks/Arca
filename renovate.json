@@ -1,13 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "platformCommit": true,
+  "dependencyDashboard": true,
   "extends": [
     "config:recommended",
     ":separateMajorReleases",
     ":combinePatchMinorReleases",
     ":semanticCommits"
-  ],
+  ]
   "timezone": "America/Sao_Paulo",
-  "dependencyDashboard": true,
   "labels": ["dependencies"],
   "assignees": ["sabschyks"],
   "rangeStrategy": "bump",
