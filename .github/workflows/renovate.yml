@@ -17,10 +17,10 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Renovate
-        uses: renovatebot/github-action@v40.3.6
+        uses: renovatebot/github-action@v46.1.1
         with:
           token: ${{ steps.generate_token.outputs.token }}
         env:
