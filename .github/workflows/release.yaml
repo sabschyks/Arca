@@ -4,48 +4,42 @@ on:
   push:
     branches: [main, develop]
 
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  id-token: write
-
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
-
 
 jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
-
+    if: |
+      github.event.head_commit.author.name != 'arca-dependency-manager[bot]' &&
+      !contains(github.event.head_commit.message, 'skip ci')
+    
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
-      - uses: pnpm/action-setup@v3
+      - name: Setup Node & pnpm
+        uses: actions/setup-node@v4
         with:
-          version: 10.29.3
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24.13.1
+          node-version: 20
           cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
 
-      - run: |
-          pnpm lint:fix
-          pnpm test
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - name: Build da Biblioteca
+        run: pnpm build
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
-          NPM_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.NPM_TOKEN || '' }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
