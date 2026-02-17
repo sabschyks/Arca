@@ -2,7 +2,7 @@ name: Renovate
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 * * * *" # Roda a cada hora
   workflow_dispatch:
 
 concurrency:
@@ -13,8 +13,14 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: renovatebot/github-action@v40.1.11
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v40.1.11
         with:
           token: ${{ secrets.RENOVATE_TOKEN }}
-          autodiscover: true
+        env:
+          RENOVATE_AUTODISCOVER: ${{ github.repository }}
+          RENOVATE_PLATFORM: 'github'
+          LOG_LEVEL: info
