@@ -23,14 +23,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node & pnpm
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
-
-      - name: Instalar pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
