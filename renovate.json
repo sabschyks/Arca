@@ -7,7 +7,7 @@
     ":separateMajorReleases",
     ":combinePatchMinorReleases",
     ":semanticCommits"
-  ]
+  ],
   "timezone": "America/Sao_Paulo",
   "labels": ["dependencies"],
   "assignees": ["sabschyks"],
