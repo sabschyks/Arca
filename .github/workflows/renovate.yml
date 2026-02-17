@@ -2,7 +2,7 @@ name: Renovate
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 * * * *" # Roda a cada hora
   workflow_dispatch:
 
 concurrency:
@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-<<<<<<< HEAD
+
       - uses: renovatebot/github-action@v40.3.6
-=======
-      - uses: renovatebot/github-action@v40.1.11
->>>>>>> daf6064 (merge (1.7.0 release) (#21))
         with:
           token: ${{ secrets.RENOVATE_TOKEN }}
-          autodiscover: true
+        env:
+          RENOVATE_AUTODISCOVER: ${{ github.repository }}
+          RENOVATE_PLATFORM: 'github'
+          LOG_LEVEL: info
