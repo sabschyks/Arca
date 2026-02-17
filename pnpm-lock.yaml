@@ -52,7 +52,7 @@ importers:
         specifier: ^7.10.10
         version: 7.10.10
       '@types/node':
-        specifier: ^25.2.1
+        specifier: ^25.2.3
         version: 25.2.3
       '@types/pino':
         specifier: ^7.0.5
