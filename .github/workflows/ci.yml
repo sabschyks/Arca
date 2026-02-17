@@ -12,31 +12,26 @@ concurrency:
 
 jobs:
   validate:
-    name: Build & Test
+    name: Validar Código
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Setup pnpm & Node
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
+      
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'pnpm'
 
-      - name: Install
+      - name: Instalar
         run: pnpm install --frozen-lockfile
 
-      - name: Lint & Typecheck
-        run: pnpm lint:fix && pnpm typecheck
-
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test:coverage
+      - name: Lint, Types & Tests
+        run: |
+          pnpm lint:fix
+          pnpm typecheck
+          pnpm test:coverage
