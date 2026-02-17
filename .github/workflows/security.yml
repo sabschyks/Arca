@@ -23,7 +23,7 @@ jobs:
           node-version: 20
 
       - name: CodeQL Init
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
 
