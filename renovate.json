@@ -5,6 +5,9 @@
   "dependencyDashboard": true,
   "prConcurrentLimit": 0,
   "pruneStaleBranches": true,
+  "baseBranches": [
+    "develop"
+  ]
   "extends": [
     "config:recommended",
     ":separateMajorReleases",
