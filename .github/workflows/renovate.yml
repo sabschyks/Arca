@@ -26,6 +26,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug: agendamento (só schedule)
+        if: github.event_name == 'schedule'
+        run: |
+          echo "Triggered by schedule at: $(date -u)"
+          echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME:-unknown}"
+          echo "GITHUB_REF=${GITHUB_REF:-unknown}"
+
       - name: Executar Renovate
         uses: renovatebot/github-action@v41.0.1
         with:
