@@ -18,6 +18,7 @@ import { LocalLruAdapter } from "./adapters/local-lru";
 import { TieredStorageAdapter } from "./core/tiered-cache";
 import { EncryptedStorageAdapter } from "./core/encrypted-storage";
 import { HotKeyTracker } from "./core/hot-key-tracker";
+import { CompressionStorageAdapter } from "./core/compression-storage";
 
 export * from "./adapters/memory";
 export * from "./adapters/redis";
@@ -76,6 +77,13 @@ export class Arca extends EventEmitter {
         );
       }
       this.storage = mainStorage;
+    }
+
+    if (options.compression?.enabled) {
+      this.storage = new CompressionStorageAdapter(
+        this.storage,
+        options.compression.threshold
+      );
     }
 
     // Aplica-se DEPOIS de decidir se é Híbrido ou Simples.

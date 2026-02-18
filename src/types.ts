@@ -67,6 +67,12 @@ export interface ArcaOptions {
    * Ex: 0.1 adiociona +/- 10% de variação ao TTL base.
    */
   jitter?: number;
+
+  compression?: {
+    enabled?: boolean;
+    /** Tamanho mínimo em bytes para comprimir (padrão: 1024 / 1kb) */
+    threshold?: number;
+  };
 }
 
 export interface FetchOptions {
