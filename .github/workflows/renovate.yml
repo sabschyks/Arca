@@ -2,8 +2,14 @@ name: Renovate
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "25 * * * *"
   workflow_dispatch:
+  issues:
+    types: [edited]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   renovate:
@@ -18,20 +24,15 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Debug agendamento (só schedule)
-        if: github.event_name == 'schedule'
-        run: |
-          echo "Triggered by schedule at: $(date -u)"
-          echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME:-unknown}"
-          echo "GITHUB_REF=${GITHUB_REF:-unknown}"
+        uses: actions/checkout@v4
 
       - name: Executar Renovate
-        uses: renovatebot/github-action@v46.1.1
+        uses: renovatebot/github-action@v41.0.1
         with:
+          # É recomendável usar o token gerado aqui
           token: ${{ steps.generate_token.outputs.token }}
         env:
-          RENOVATE_REPOSITORIES: 'sabschyks/Arca'
+          # Se o bot roda no próprio repo, você pode usar a variável automática
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_PLATFORM: 'github'
-          RENOVATE_GIT_AUTHOR: 'Arca Bot <262118762+arca-dependency-manager[bot]@users.noreply.github.com>'
+          # O Renovate geralmente detecta o autor se o token for de um App
