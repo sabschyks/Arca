@@ -3,8 +3,10 @@ name: Security
 on:
   push:
     branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
   schedule:
-    - cron: '0 1 * * 0' 
+    - cron: '0 6 * * *' 
 jobs:
   scan:
     name: Security Scan
