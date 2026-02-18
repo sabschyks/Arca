@@ -7,7 +7,7 @@
   "pruneStaleBranches": true,
   "baseBranches": [
     "develop"
-  ]
+  ],
   "extends": [
     "config:recommended",
     ":separateMajorReleases",
