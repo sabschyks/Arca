@@ -11,8 +11,6 @@ importers:
       '@prisma/client':
         specifier: 7.4.0
         version: 7.4.0(prisma@7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
-        specifier: 7.3.0
-        version: 7.3.0(prisma@7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
       ioredis:
         specifier: ^5.9.3
         version: 5.9.3
@@ -31,8 +29,6 @@ importers:
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.2
-        version: 2.4.2
-        specifier: ^2.3.14
         version: 2.4.2
       '@semantic-release/commit-analyzer':
         specifier: ^13.0.1
@@ -80,10 +76,6 @@ importers:
         specifier: ^1.0.34
         version: 1.0.34
       prisma:
-        specifier: ^7.4.0
-        version: 7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-        specifier: ^7.4.0
-        version: 7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
         specifier: ^7.4.0
         version: 7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       semantic-release:
@@ -179,15 +171,11 @@ packages:
 
   '@biomejs/cli-linux-arm64@2.4.2':
     resolution: {integrity: sha512-DI3Mi7GT2zYNgUTDEbSjl3e1KhoP76OjQdm8JpvZYZWtVDRyLd3w8llSr2TWk1z+U3P44kUBWY3X7H9MD1/DGQ==}
-  '@biomejs/cli-linux-arm64@2.4.2':
-    resolution: {integrity: sha512-DI3Mi7GT2zYNgUTDEbSjl3e1KhoP76OjQdm8JpvZYZWtVDRyLd3w8llSr2TWk1z+U3P44kUBWY3X7H9MD1/DGQ==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@biomejs/cli-linux-x64-musl@2.4.2':
-    resolution: {integrity: sha512-wbBmTkeAoAYbOQ33f6sfKG7pcRSydQiF+dTYOBjJsnXO2mWEOQHllKlC2YVnedqZFERp2WZhFUoO7TNRwnwEHQ==}
   '@biomejs/cli-linux-x64-musl@2.4.2':
     resolution: {integrity: sha512-wbBmTkeAoAYbOQ33f6sfKG7pcRSydQiF+dTYOBjJsnXO2mWEOQHllKlC2YVnedqZFERp2WZhFUoO7TNRwnwEHQ==}
     engines: {node: '>=14.21.3'}
@@ -504,21 +492,11 @@ packages:
     resolution: {integrity: sha512-h104Kh26rR8tm+a3Qkc5S4VLYint3FE48as7+/5oCEcKR2idC/pF1G6AhIXKI+eHPJa/3J9i5z0Al47IeGHPkA==}
     engines: {node: '>=12'}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  '@prisma/client-runtime-utils@7.4.0':
-    resolution: {integrity: sha512-jTmWAOBGBSCT8n7SMbpjCpHjELgcDW9GNP/CeK6CeqjUFlEL6dn8Cl81t/NBDjJdXDm85XDJmc+PEQqqQee3xw==}
-=======
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@prisma/client-runtime-utils@7.3.0':
-    resolution: {integrity: sha512-dG/ceD9c+tnXATPk8G+USxxYM9E6UdMTnQeQ+1SZUDxTz7SgQcfxEqafqIQHcjdlcNK/pvmmLfSwAs3s2gYwUw==}
->>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
-=======
   '@prisma/client-runtime-utils@7.4.0':
     resolution: {integrity: sha512-jTmWAOBGBSCT8n7SMbpjCpHjELgcDW9GNP/CeK6CeqjUFlEL6dn8Cl81t/NBDjJdXDm85XDJmc+PEQqqQee3xw==}
->>>>>>> 03ec2fd (fix(deps): update non-major updates (#36))
 
   '@prisma/client@7.4.0':
     resolution: {integrity: sha512-Sc+ncr7+ph1hMf1LQfn6UyEXDEamCd5pXMsx8Q3SBH0NGX+zjqs3eaABt9hXwbcK9l7f8UyK8ldxOWA2LyPynQ==}
@@ -790,8 +768,6 @@ packages:
     resolution: {integrity: sha512-wKoab31pknvILkxAF8ss+v9iNyhw5Iu/0jLtRkUD74cNfOOLJNnqfFKAv0r7wVaTQxRZtWrMpGfShwwBjOcgcg==}
     deprecated: This is a stub types definition. pino provides its own type definitions, so you do not need this installed.
 
-  '@types/react@19.2.14':
-    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
 
@@ -1915,8 +1891,6 @@ packages:
 
   npm@11.10.0:
     resolution: {integrity: sha512-i8hE43iSIAMFuYVi8TxsEISdELM4fIza600aLjJ0ankGPLqd0oTPKMJqAcO/QWm307MbSlWGzJcNZ0lGMQgHPA==}
-  npm@11.10.0:
-    resolution: {integrity: sha512-i8hE43iSIAMFuYVi8TxsEISdELM4fIza600aLjJ0ankGPLqd0oTPKMJqAcO/QWm307MbSlWGzJcNZ0lGMQgHPA==}
     engines: {node: ^20.17.0 || >=22.9.0}
     hasBin: true
     bundledDependencies:
@@ -2984,7 +2958,6 @@ snapshots:
   '@bcoe/v8-coverage@1.0.2': {}
 
   '@biomejs/biome@2.4.2':
-  '@biomejs/biome@2.4.2':
     optionalDependencies:
       '@biomejs/cli-darwin-arm64': 2.4.2
       '@biomejs/cli-darwin-x64': 2.4.2
@@ -2999,30 +2972,23 @@ snapshots:
     optional: true
 
   '@biomejs/cli-darwin-x64@2.4.2':
-  '@biomejs/cli-darwin-x64@2.4.2':
     optional: true
 
-  '@biomejs/cli-linux-arm64-musl@2.4.2':
   '@biomejs/cli-linux-arm64-musl@2.4.2':
     optional: true
 
   '@biomejs/cli-linux-arm64@2.4.2':
-  '@biomejs/cli-linux-arm64@2.4.2':
     optional: true
 
-  '@biomejs/cli-linux-x64-musl@2.4.2':
   '@biomejs/cli-linux-x64-musl@2.4.2':
     optional: true
 
   '@biomejs/cli-linux-x64@2.4.2':
-  '@biomejs/cli-linux-x64@2.4.2':
     optional: true
 
   '@biomejs/cli-win32-arm64@2.4.2':
-  '@biomejs/cli-win32-arm64@2.4.2':
     optional: true
 
-  '@biomejs/cli-win32-x64@2.4.2':
   '@biomejs/cli-win32-x64@2.4.2':
     optional: true
 
@@ -3246,25 +3212,15 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  '@prisma/client-runtime-utils@7.4.0': {}
-=======
   '@polka/url@1.0.0-next.29':
     optional: true
 
-  '@prisma/client-runtime-utils@7.3.0': {}
->>>>>>> 8f70b23 (chore: add CI, Security, Renovate and Release workflows (#20))
-
-=======
   '@prisma/client-runtime-utils@7.4.0': {}
 
->>>>>>> 03ec2fd (fix(deps): update non-major updates (#36))
   '@prisma/client@7.4.0(prisma@7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@prisma/client-runtime-utils': 7.4.0
     optionalDependencies:
-      prisma: 7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       prisma: 7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       typescript: 5.9.3
 
@@ -3329,9 +3285,7 @@ snapshots:
   '@prisma/query-plan-executor@7.2.0': {}
 
   '@prisma/studio-core@0.13.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-  '@prisma/studio-core@0.13.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@types/react': 19.2.14
       '@types/react': 19.2.14
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
@@ -3480,7 +3434,6 @@ snapshots:
       nerf-dart: 1.0.0
       normalize-url: 8.1.1
       npm: 11.10.0
-      npm: 11.10.0
       rc: 1.2.8
       read-pkg: 10.1.0
       registry-auth-token: 5.1.1
@@ -3539,7 +3492,6 @@ snapshots:
     dependencies:
       pino: 10.3.1
 
-  '@types/react@19.2.14':
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
@@ -4662,7 +4614,6 @@ snapshots:
       unicorn-magic: 0.3.0
 
   npm@11.10.0: {}
-  npm@11.10.0: {}
 
   nypm@0.6.5:
     dependencies:
@@ -4838,12 +4789,10 @@ snapshots:
       parse-ms: 4.0.0
 
   prisma@7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
-  prisma@7.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
     dependencies:
       '@prisma/config': 7.4.0
       '@prisma/dev': 0.20.0(typescript@5.9.3)
       '@prisma/engines': 7.4.0
-      '@prisma/studio-core': 0.13.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@prisma/studio-core': 0.13.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       mysql2: 3.15.3
       postgres: 3.4.7
