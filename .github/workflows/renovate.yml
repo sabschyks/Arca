@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Debug: agendamento (só schedule)
+      - name: Debug agendamento (só schedule)
         if: github.event_name == 'schedule'
         run: |
           echo "Triggered by schedule at: $(date -u)"
