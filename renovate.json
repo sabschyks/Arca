@@ -5,7 +5,7 @@
   "dependencyDashboard": true,
   "prConcurrentLimit": 0,
   "pruneStaleBranches": true,
-  "baseBranchPatterns": [
+  "baseBranches": [
     "develop"
   ],
   "extends": [
