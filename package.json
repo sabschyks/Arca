@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "ioredis": "^5.10.1",
-    "lru-cache": "^11.3.3",
+    "lru-cache": "^11.3.5",
     "pino": "^10.3.1",
     "prom-client": "^15.1.3"
   },
