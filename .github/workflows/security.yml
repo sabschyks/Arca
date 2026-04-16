@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node & pnpm
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.1
+          node-version: 24.15.0
 
       - name: CodeQL Init
         uses: github/codeql-action/init@v4
