@@ -15,8 +15,8 @@ importers:
         specifier: ^5.10.1
         version: 5.10.1
       lru-cache:
-        specifier: ^11.3.6
-        version: 11.3.6
+        specifier: ^11.4.0
+        version: 11.4.0
       pino:
         specifier: ^10.3.1
         version: 10.3.1
@@ -2021,8 +2021,8 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  lru-cache@11.3.6:
-    resolution: {integrity: sha512-Gf/KoL3C/MlI7Bt0PGI9I+TeTC/I6r/csU58N4BSNc4lppLBeKsOdFYkK+dX0ABDUMJNfCHTyPpzwwO21Awd3A==}
+  lru-cache@11.4.0:
+    resolution: {integrity: sha512-W+R+kFL4HgVxONq2bhXPi3bGpzGe/yEhVOp233qw9wCRtgncJ15P3bC+e4zZMu4Cq7d+WAJjXGW0uUkifhcatA==}
     engines: {node: 20 || >=22}
 
   lru.min@1.1.4:
@@ -3882,7 +3882,7 @@ snapshots:
 
   '@types/lru-cache@7.10.10':
     dependencies:
-      lru-cache: 11.3.6
+      lru-cache: 11.4.0
 
   '@types/node@25.8.0':
     dependencies:
@@ -4630,7 +4630,7 @@ snapshots:
 
   hosted-git-info@9.0.3:
     dependencies:
-      lru-cache: 11.3.6
+      lru-cache: 11.4.0
 
   html-escaper@2.0.2: {}
 
@@ -4907,7 +4907,7 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  lru-cache@11.3.6: {}
+  lru-cache@11.4.0: {}
 
   lru.min@1.1.4: {}
 
