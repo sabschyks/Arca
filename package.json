@@ -40,7 +40,7 @@
   "author": "Sabrinna Guimarães (sabschyks)",
   "license": "MIT",
   "engines": {
-    "node": ">=24.15.0"
+    "node": ">=24.16.0"
   },
   "packageManager": "pnpm@10.33.4",
   "devDependencies": {
