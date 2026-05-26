@@ -67,7 +67,7 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
-    "ioredis": "^5.10.1",
+    "ioredis": "^5.11.0",
     "lru-cache": "^11.5.0",
     "pino": "^10.3.1",
     "prom-client": "^15.1.3"
