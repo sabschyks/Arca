@@ -34,7 +34,7 @@ jobs:
           echo "GITHUB_REF=${GITHUB_REF:-unknown}"
 
       - name: Executar Renovate
-        uses: renovatebot/github-action@v46.1.14
+        uses: renovatebot/github-action@v46.1.15
         with:
           # É recomendável usar o token gerado aqui
           token: ${{ steps.generate_token.outputs.token }}
