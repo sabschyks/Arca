@@ -52,7 +52,7 @@
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@types/ioredis-mock": "^8.2.7",
     "@types/lru-cache": "^7.10.10",
-    "@types/node": "^25.9.3",
+    "@types/node": "^25.9.4",
     "@types/pino": "^7.0.5",
     "@vitest/coverage-v8": "^4.1.9",
     "benny": "^3.7.1",
